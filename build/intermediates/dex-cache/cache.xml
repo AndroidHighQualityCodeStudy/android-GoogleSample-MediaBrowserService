@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<items version="2" >
+
+    <item
+        is-multidex="false"
+        jar="/Users/xiaxveliang/.android/build-cache/3cb2290a080c5c0105afcc4b15bb9778e4cf83d4/output/jars/classes.jar"
+        jumboMode="false"
+        optimize="true"
+        revision="26.0.1"
+        sha1="80d9ff49e99ff481062ea190b43e8d6bdffd4ddc">
+        <dex dex="/Users/xiaxveliang/a_Work/WorkSpack/ws/android-MediaBrowserService-master/Application/build/intermediates/pre-dexed/debug/classes_89240f3d3595dcae670feed5e9ae424ff06baad4.jar" />
+    </item>
+    <item
+        is-multidex="false"
+        jar="/Users/xiaxveliang/.android/build-cache/4ff4015fe58e1d83f9abb0a1d7a1abf5ea188bfd/output/jars/classes.jar"
+        jumboMode="false"
+        optimize="true"
+        revision="26.0.1"
+        sha1="44ee06abb66da30f5855e6bf54574e64cdcd982a">
+        <dex dex="/Users/xiaxveliang/a_Work/WorkSpack/ws/android-MediaBrowserService-master/Application/build/intermediates/pre-dexed/debug/classes_93188341163a5dfe655a826046ebf386038cee26.jar" />
+    </item>
+    <item
+        is-multidex="false"
+        jar="/Users/xiaxveliang/Library/Android/sdk/extras/m2repository/com/android/support/constraint/constraint-layout-solver/1.0.2/constraint-layout-solver-1.0.2.jar"
+        jumboMode="false"
+        optimize="true"
+        revision="26.0.1"
+        sha1="b9cd8fc6bd15cb915735d34535db30ece0c44603">
+        <dex dex="/Users/xiaxveliang/a_Work/WorkSpack/ws/android-MediaBrowserService-master/Application/build/intermediates/pre-dexed/debug/constraint-layout-solver-1.0.2_297a7927d0dcafbc9affb57daf2b80e56e70757f.jar" />
+    </item>
+
+</items>

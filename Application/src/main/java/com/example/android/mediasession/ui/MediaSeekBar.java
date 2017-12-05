@@ -33,10 +33,19 @@ import android.widget.SeekBar;
  */
 
 public class MediaSeekBar extends AppCompatSeekBar {
+
+
+    // 音频变化控制器
     private MediaControllerCompat mMediaController;
+    // 音频变化回调
     private ControllerCallback mControllerCallback;
 
     private boolean mIsTracking = false;
+
+
+    /**
+     * seekbar 变化回调
+     */
     private OnSeekBarChangeListener mOnSeekBarChangeListener = new OnSeekBarChangeListener() {
         @Override
         public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
@@ -49,14 +58,20 @@ public class MediaSeekBar extends AppCompatSeekBar {
 
         @Override
         public void onStopTrackingTouch(SeekBar seekBar) {
+            // 音频seek
             mMediaController.getTransportControls().seekTo(getProgress());
+            //
             mIsTracking = false;
         }
     };
+    /**
+     * 属性动画
+     */
     private ValueAnimator mProgressAnimator;
 
     public MediaSeekBar(Context context) {
         super(context);
+        // seek
         super.setOnSeekBarChangeListener(mOnSeekBarChangeListener);
     }
 
@@ -75,17 +90,32 @@ public class MediaSeekBar extends AppCompatSeekBar {
         // Prohibit adding seek listeners to this subclass.
     }
 
+
+    /**
+     * 设置音频变化控制器
+     *
+     * @param mediaController
+     */
     public void setMediaController(final MediaControllerCompat mediaController) {
+        //
         if (mediaController != null) {
+            // 音频变化回调
             mControllerCallback = new ControllerCallback();
+            // 注册回调
             mediaController.registerCallback(mControllerCallback);
-        } else if (mMediaController != null) {
+        }
+        // 取消回调注册
+        else if (mMediaController != null) {
             mMediaController.unregisterCallback(mControllerCallback);
             mControllerCallback = null;
         }
+        // mediaController赋值
         mMediaController = mediaController;
     }
 
+    /**
+     * 取消音频变化回调
+     */
     public void disconnectController() {
         if (mMediaController != null) {
             mMediaController.unregisterCallback(mControllerCallback);
@@ -94,6 +124,10 @@ public class MediaSeekBar extends AppCompatSeekBar {
         }
     }
 
+
+    /**
+     *
+     */
     private class ControllerCallback
             extends MediaControllerCompat.Callback
             implements ValueAnimator.AnimatorUpdateListener {
@@ -107,17 +141,27 @@ public class MediaSeekBar extends AppCompatSeekBar {
         public void onPlaybackStateChanged(PlaybackStateCompat state) {
             super.onPlaybackStateChanged(state);
 
+            /**
+             * 正在进行的动画 关闭
+             */
             // If there's an ongoing animation, stop it now.
             if (mProgressAnimator != null) {
                 mProgressAnimator.cancel();
                 mProgressAnimator = null;
             }
 
+            /**
+             * 设置播放进度
+             */
             final int progress = state != null
                     ? (int) state.getPosition()
                     : 0;
             setProgress(progress);
 
+
+            /**
+             *
+             */
             // If the media is playing then the seekbar should follow it, and the easiest
             // way to do that is to create a ValueAnimator to update it so the bar reaches
             // the end of the media the same time as playback gets there (or close enough).

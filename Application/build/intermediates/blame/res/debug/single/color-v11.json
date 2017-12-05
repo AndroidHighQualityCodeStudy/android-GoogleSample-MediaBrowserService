@@ -1,0 +1,10 @@
+[
+    {
+        "merged": "/Users/xiaxveliang/a_Work/WorkSpack/ws/android-MediaBrowserService-master/Application/build/intermediates/res/merged/debug/color-v11/abc_background_cache_hint_selector_material_light.xml",
+        "source": "/Users/xiaxveliang/.android/build-cache/d77749de8c90cf3ea29e070aced5ba2b2c2c3e61/output/res/color-v11/abc_background_cache_hint_selector_material_light.xml"
+    },
+    {
+        "merged": "/Users/xiaxveliang/a_Work/WorkSpack/ws/android-MediaBrowserService-master/Application/build/intermediates/res/merged/debug/color-v11/abc_background_cache_hint_selector_material_dark.xml",
+        "source": "/Users/xiaxveliang/.android/build-cache/d77749de8c90cf3ea29e070aced5ba2b2c2c3e61/output/res/color-v11/abc_background_cache_hint_selector_material_dark.xml"
+    }
+]

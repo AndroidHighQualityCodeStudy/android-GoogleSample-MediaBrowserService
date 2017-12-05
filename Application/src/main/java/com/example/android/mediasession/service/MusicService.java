@@ -36,30 +36,54 @@ import com.example.android.mediasession.service.players.MediaPlayerAdapter;
 import java.util.ArrayList;
 import java.util.List;
 
+
+/**
+ * MediaBrowserServiceCompat
+ */
 public class MusicService extends MediaBrowserServiceCompat {
 
     private static final String TAG = MusicService.class.getSimpleName();
 
-    private MediaSessionCompat mSession;
+
+    //
     private PlayerAdapter mPlayback;
     private MediaNotificationManager mMediaNotificationManager;
-    private MediaSessionCallback mCallback;
+
     private boolean mServiceInStartedState;
+
+
+    /**
+     *
+     */
+    // 与MediaControl交互的MediaSessionCompat
+    private MediaSessionCompat mMediaSessionCompat;
+    // MediaSession回调
+    private MediaSessionCallback mMediaSessionCallback;
 
     @Override
     public void onCreate() {
         super.onCreate();
 
-        // Create a new MediaSession.
-        mSession = new MediaSessionCompat(this, "MusicService");
-        mCallback = new MediaSessionCallback();
-        mSession.setCallback(mCallback);
-        mSession.setFlags(
-                MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS |
-                MediaSessionCompat.FLAG_HANDLES_QUEUE_COMMANDS |
-                MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS);
-        setSessionToken(mSession.getSessionToken());
 
+        /**
+         *
+         */
+        // 创建MediaSessionCompat
+        mMediaSessionCompat = new MediaSessionCompat(this, "MusicService");
+        // 创建MediaSessionCallback
+        mMediaSessionCallback = new MediaSessionCallback();
+        // setCallBack
+        mMediaSessionCompat.setCallback(mMediaSessionCallback);
+        mMediaSessionCompat.setFlags(
+                MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS |
+                        MediaSessionCompat.FLAG_HANDLES_QUEUE_COMMANDS |
+                        MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS);
+        // setSessionToken
+        setSessionToken(mMediaSessionCompat.getSessionToken());
+
+        /**
+         *
+         */
         mMediaNotificationManager = new MediaNotificationManager(this);
 
         mPlayback = new MediaPlayerAdapter(this, new MediaPlayerListener());
@@ -76,7 +100,7 @@ public class MusicService extends MediaBrowserServiceCompat {
     public void onDestroy() {
         mMediaNotificationManager.onDestroy();
         mPlayback.stop();
-        mSession.release();
+        mMediaSessionCompat.release();
         Log.d(TAG, "onDestroy: MediaPlayerAdapter stopped, and MediaSession released");
     }
 
@@ -94,15 +118,25 @@ public class MusicService extends MediaBrowserServiceCompat {
         result.sendResult(MusicLibrary.getMediaItems());
     }
 
+
+    // #################################################################################
+
+    /**
+     * MediaSessionCallback
+     */
     // MediaSession Callback: Transport Controls -> MediaPlayerAdapter
     public class MediaSessionCallback extends MediaSessionCompat.Callback {
+        // 播放列表
         private final List<MediaSessionCompat.QueueItem> mPlaylist = new ArrayList<>();
         private int mQueueIndex = -1;
+        // 准备播放的音频数据
         private MediaMetadataCompat mPreparedMedia;
 
         @Override
         public void onAddQueueItem(MediaDescriptionCompat description) {
+            //
             mPlaylist.add(new MediaSessionCompat.QueueItem(description, description.hashCode()));
+            //
             mQueueIndex = (mQueueIndex == -1) ? 0 : mQueueIndex;
         }
 
@@ -121,10 +155,10 @@ public class MusicService extends MediaBrowserServiceCompat {
 
             final String mediaId = mPlaylist.get(mQueueIndex).getDescription().getMediaId();
             mPreparedMedia = MusicLibrary.getMetadata(MusicService.this, mediaId);
-            mSession.setMetadata(mPreparedMedia);
+            mMediaSessionCompat.setMetadata(mPreparedMedia);
 
-            if (!mSession.isActive()) {
-                mSession.setActive(true);
+            if (!mMediaSessionCompat.isActive()) {
+                mMediaSessionCompat.setActive(true);
             }
         }
 
@@ -151,7 +185,7 @@ public class MusicService extends MediaBrowserServiceCompat {
         @Override
         public void onStop() {
             mPlayback.stop();
-            mSession.setActive(false);
+            mMediaSessionCompat.setActive(false);
         }
 
         @Override
@@ -178,6 +212,10 @@ public class MusicService extends MediaBrowserServiceCompat {
         }
     }
 
+
+    // #################################################################################
+
+
     // MediaPlayerAdapter Callback: MediaPlayerAdapter state -> MusicService.
     public class MediaPlayerListener extends PlaybackInfoListener {
 
@@ -190,7 +228,7 @@ public class MusicService extends MediaBrowserServiceCompat {
         @Override
         public void onPlaybackStateChange(PlaybackStateCompat state) {
             // Report the state to the MediaSession.
-            mSession.setPlaybackState(state);
+            mMediaSessionCompat.setPlaybackState(state);
 
             // Manage the started state of this service.
             switch (state.getState()) {

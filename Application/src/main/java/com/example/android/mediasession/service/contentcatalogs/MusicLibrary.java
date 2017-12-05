@@ -35,10 +35,30 @@ import java.util.concurrent.TimeUnit;
 
 public class MusicLibrary {
 
+
+    /**
+     *
+     */
+    // 构造音频数据
     private static final TreeMap<String, MediaMetadataCompat> music = new TreeMap<>();
+    // 图片资源id
     private static final HashMap<String, Integer> albumRes = new HashMap<>();
+    // 音频名称
     private static final HashMap<String, String> musicFileName = new HashMap<>();
 
+    /**
+     * 构造音频数据
+     * @param mediaId         音频id
+     * @param title           标题
+     * @param artist          作者
+     * @param album           图片
+     * @param genre           种类
+     * @param duration        时长
+     * @param durationUnit    时间单位
+     * @param musicFilename   音频文件
+     * @param albumArtResId   资源id
+     * @param albumArtResName
+     */
     static {
         createMediaMetadataCompat(
                 "Jazz_In_Paris",
@@ -120,6 +140,19 @@ public class MusicLibrary {
         return builder.build();
     }
 
+
+    /**
+     * @param mediaId         音频id
+     * @param title           标题
+     * @param artist          作者
+     * @param album           图片
+     * @param genre           种类
+     * @param duration        时长
+     * @param durationUnit    时间单位
+     * @param musicFilename   音频文件
+     * @param albumArtResId   资源id
+     * @param albumArtResName
+     */
     private static void createMediaMetadataCompat(
             String mediaId,
             String title,
@@ -131,6 +164,7 @@ public class MusicLibrary {
             String musicFilename,
             int albumArtResId,
             String albumArtResName) {
+        // 音频数据
         music.put(
                 mediaId,
                 new MediaMetadataCompat.Builder()
@@ -138,7 +172,7 @@ public class MusicLibrary {
                         .putString(MediaMetadataCompat.METADATA_KEY_ALBUM, album)
                         .putString(MediaMetadataCompat.METADATA_KEY_ARTIST, artist)
                         .putLong(MediaMetadataCompat.METADATA_KEY_DURATION,
-                                 TimeUnit.MILLISECONDS.convert(duration, durationUnit))
+                                TimeUnit.MILLISECONDS.convert(duration, durationUnit))
                         .putString(MediaMetadataCompat.METADATA_KEY_GENRE, genre)
                         .putString(
                                 MediaMetadataCompat.METADATA_KEY_ALBUM_ART_URI,
@@ -148,7 +182,9 @@ public class MusicLibrary {
                                 getAlbumArtUri(albumArtResName))
                         .putString(MediaMetadataCompat.METADATA_KEY_TITLE, title)
                         .build());
+        // 图片资源
         albumRes.put(mediaId, albumArtResId);
+        // 音频名称
         musicFileName.put(mediaId, musicFilename);
     }
 }

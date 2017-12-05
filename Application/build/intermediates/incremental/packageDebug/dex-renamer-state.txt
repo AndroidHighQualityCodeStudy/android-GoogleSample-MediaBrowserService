@@ -1,0 +1,4 @@
+#Fri Dec 01 10:17:26 CST 2017
+base.0=/Users/xiaxveliang/a_Work/WorkSpack/ws/android-MediaBrowserService-master/Application/build/intermediates/transforms/dex/debug/folders/1000/1f/main
+renamed.0=classes.dex
+file.0=/Users/xiaxveliang/a_Work/WorkSpack/ws/android-MediaBrowserService-master/Application/build/intermediates/transforms/dex/debug/folders/1000/1f/main/classes.dex

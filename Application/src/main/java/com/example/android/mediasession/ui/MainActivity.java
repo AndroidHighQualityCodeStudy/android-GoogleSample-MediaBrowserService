@@ -33,32 +33,52 @@ import com.example.android.mediasession.service.contentcatalogs.MusicLibrary;
 
 public class MainActivity extends AppCompatActivity {
 
-    private ImageView mAlbumArt;
+
+    // 歌曲标题
     private TextView mTitleTextView;
+    // 歌曲作者
     private TextView mArtistTextView;
+    // 歌曲图片
+    private ImageView mAlbumArt;
+    // 播放器控制器背景
     private ImageView mMediaControlsImage;
+    // seekbar
     private MediaSeekBar mSeekBarAudio;
 
+    //
     private MediaBrowserAdapter mMediaBrowserAdapter;
 
+    /**
+     *
+     */
     private boolean mIsPlaying;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+        //
         initializeUI();
+        //
         mMediaBrowserAdapter = new MediaBrowserAdapter(this);
         mMediaBrowserAdapter.addListener(new MediaBrowserListener());
     }
 
+    /**
+     *
+     */
     private void initializeUI() {
+        // 歌曲标题
         mTitleTextView = (TextView) findViewById(R.id.song_title);
+        // 歌曲作者
         mArtistTextView = (TextView) findViewById(R.id.song_artist);
+        // 歌曲图片
         mAlbumArt = (ImageView) findViewById(R.id.album_art);
+        // 播放器控制器背景
         mMediaControlsImage = (ImageView) findViewById(R.id.media_controls);
+        // seekbar
         mSeekBarAudio = (MediaSeekBar) findViewById(R.id.seekbar_audio);
-
+        // 上一首
         final Button buttonPrevious = (Button) findViewById(R.id.button_previous);
         buttonPrevious.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -66,7 +86,7 @@ public class MainActivity extends AppCompatActivity {
                 mMediaBrowserAdapter.getTransportControls().skipToPrevious();
             }
         });
-
+        // 播放按钮
         final Button buttonPlay = (Button) findViewById(R.id.button_play);
         buttonPlay.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -78,7 +98,7 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
-
+        // 下一首
         final Button buttonNext = (Button) findViewById(R.id.button_next);
         buttonNext.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -111,8 +131,10 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void onPlaybackStateChanged(PlaybackStateCompat playbackState) {
+            // 正在播放
             mIsPlaying = playbackState != null &&
                     playbackState.getState() == PlaybackStateCompat.STATE_PLAYING;
+            // 这是要干什么??????????
             mMediaControlsImage.setPressed(mIsPlaying);
         }
 
@@ -121,10 +143,13 @@ public class MainActivity extends AppCompatActivity {
             if (mediaMetadata == null) {
                 return;
             }
+            // 音频的标题
             mTitleTextView.setText(
                     mediaMetadata.getString(MediaMetadataCompat.METADATA_KEY_TITLE));
+            // 音频作者
             mArtistTextView.setText(
                     mediaMetadata.getString(MediaMetadataCompat.METADATA_KEY_ARTIST));
+            // 音频图片
             mAlbumArt.setImageBitmap(MusicLibrary.getAlbumBitmap(
                     MainActivity.this,
                     mediaMetadata.getString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID)));

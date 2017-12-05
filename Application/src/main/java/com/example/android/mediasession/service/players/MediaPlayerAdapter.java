@@ -35,21 +35,40 @@ import com.example.android.mediasession.ui.MainActivity;
  */
 public final class MediaPlayerAdapter extends PlayerAdapter {
 
-    private final Context mContext;
-    private MediaPlayer mMediaPlayer;
-    private String mFilename;
-    private PlaybackInfoListener mPlaybackInfoListener;
-    private MediaMetadataCompat mCurrentMedia;
-    private int mState;
-    private boolean mCurrentMediaPlayedToCompletion;
 
     // Work-around for a MediaPlayer bug related to the behavior of MediaPlayer.seekTo()
     // while not playing.
     private int mSeekWhileNotPlaying = -1;
 
+
+    // 上下文对象
+    private final Context mContext;
+    // 播放信息回调
+    private PlaybackInfoListener mPlaybackInfoListener;
+
+    // 音频播放器MediaPlayer
+    private MediaPlayer mMediaPlayer;
+    // 当前音频信息
+    private MediaMetadataCompat mCurrentMedia;
+    // 当前音频id
+    private String mFilename;
+    // 当前的播放状态
+    private int mState;
+    // 是否播放完成
+    private boolean mCurrentMediaPlayedToCompletion;
+
+
+    /**
+     * 构造方法
+     *
+     * @param context
+     * @param listener
+     */
     public MediaPlayerAdapter(Context context, PlaybackInfoListener listener) {
         super(context);
+        // 上下文对象
         mContext = context.getApplicationContext();
+        // 播放信息回调
         mPlaybackInfoListener = listener;
     }
 
@@ -61,11 +80,14 @@ public final class MediaPlayerAdapter extends PlayerAdapter {
      * not the constructor.
      */
     private void initializeMediaPlayer() {
+        // 创建MediaPlayer
         if (mMediaPlayer == null) {
             mMediaPlayer = new MediaPlayer();
+            // 音频播放完成的回调
             mMediaPlayer.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
                 @Override
                 public void onCompletion(MediaPlayer mediaPlayer) {
+                    // 回调音频播放完成
                     mPlaybackInfoListener.onPlaybackCompleted();
 
                     // Set the state to "paused" because it most closely matches the state
@@ -82,7 +104,9 @@ public final class MediaPlayerAdapter extends PlayerAdapter {
     // Implements PlaybackControl.
     @Override
     public void playFromMedia(MediaMetadataCompat metadata) {
+        // 当前音频信息
         mCurrentMedia = metadata;
+        // 音频id
         final String mediaId = metadata.getDescription().getMediaId();
         playFile(MusicLibrary.getMusicFilename(mediaId));
     }
@@ -92,27 +116,39 @@ public final class MediaPlayerAdapter extends PlayerAdapter {
         return mCurrentMedia;
     }
 
+
+    /**
+     * 根据音频id进行音频播放
+     *
+     * @param filename
+     */
     private void playFile(String filename) {
+        // 音频是否发生变化
         boolean mediaChanged = (mFilename == null || !filename.equals(mFilename));
+        // 音频是否播放完成
         if (mCurrentMediaPlayedToCompletion) {
             // Last audio file was played to completion, the resourceId hasn't changed, but the
             // player was released, so force a reload of the media file for playback.
             mediaChanged = true;
             mCurrentMediaPlayedToCompletion = false;
         }
+        // 音频未发生变化
         if (!mediaChanged) {
+            // 没有播放则播放
             if (!isPlaying()) {
                 play();
             }
             return;
-        } else {
+        }
+        // 音频已发生变化
+        else {
             release();
         }
-
+        // 变化后的音频id
         mFilename = filename;
-
+        // 创建MediaPlayer
         initializeMediaPlayer();
-
+        // 设置要播放的音频文件
         try {
             AssetFileDescriptor assetFileDescriptor = mContext.getAssets().openFd(mFilename);
             mMediaPlayer.setDataSource(
@@ -122,13 +158,13 @@ public final class MediaPlayerAdapter extends PlayerAdapter {
         } catch (Exception e) {
             throw new RuntimeException("Failed to open file: " + mFilename, e);
         }
-
+        // 准备播放
         try {
             mMediaPlayer.prepare();
         } catch (Exception e) {
             throw new RuntimeException("Failed to open file: " + mFilename, e);
         }
-
+        // 播放
         play();
     }
 
@@ -140,6 +176,9 @@ public final class MediaPlayerAdapter extends PlayerAdapter {
         release();
     }
 
+    /**
+     * 释放 MediaPlayer
+     */
     private void release() {
         if (mMediaPlayer != null) {
             mMediaPlayer.release();
@@ -147,11 +186,20 @@ public final class MediaPlayerAdapter extends PlayerAdapter {
         }
     }
 
+    /**
+     * 音频是否在播放
+     *
+     * @return
+     */
     @Override
     public boolean isPlaying() {
         return mMediaPlayer != null && mMediaPlayer.isPlaying();
     }
 
+
+    /**
+     * 播放音频
+     */
     @Override
     protected void onPlay() {
         if (mMediaPlayer != null && !mMediaPlayer.isPlaying()) {
@@ -168,10 +216,19 @@ public final class MediaPlayerAdapter extends PlayerAdapter {
         }
     }
 
+    /**
+     * 播放状态
+     *
+     * @param newPlayerState
+     */
     // This is the main reducer for the player state machine.
     private void setNewState(@PlaybackStateCompat.State int newPlayerState) {
+        // 设置播放状态
         mState = newPlayerState;
 
+        /**
+         * 状态为STOPPED，则为完成状态
+         */
         // Whether playback goes to completion, or whether it is stopped, the
         // mCurrentMediaPlayedToCompletion is set to true.
         if (mState == PlaybackStateCompat.STATE_STOPPED) {
@@ -193,9 +250,10 @@ public final class MediaPlayerAdapter extends PlayerAdapter {
         final PlaybackStateCompat.Builder stateBuilder = new PlaybackStateCompat.Builder();
         stateBuilder.setActions(getAvailableActions());
         stateBuilder.setState(mState,
-                              reportPosition,
-                              1.0f,
-                              SystemClock.elapsedRealtime());
+                reportPosition,
+                1.0f,
+                SystemClock.elapsedRealtime());
+        // 播放状态回调
         mPlaybackInfoListener.onPlaybackStateChange(stateBuilder.build());
     }
 
@@ -208,28 +266,28 @@ public final class MediaPlayerAdapter extends PlayerAdapter {
     @PlaybackStateCompat.Actions
     private long getAvailableActions() {
         long actions = PlaybackStateCompat.ACTION_PLAY_FROM_MEDIA_ID
-                       | PlaybackStateCompat.ACTION_PLAY_FROM_SEARCH
-                       | PlaybackStateCompat.ACTION_SKIP_TO_NEXT
-                       | PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS;
+                | PlaybackStateCompat.ACTION_PLAY_FROM_SEARCH
+                | PlaybackStateCompat.ACTION_SKIP_TO_NEXT
+                | PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS;
         switch (mState) {
             case PlaybackStateCompat.STATE_STOPPED:
                 actions |= PlaybackStateCompat.ACTION_PLAY
-                           | PlaybackStateCompat.ACTION_PAUSE;
+                        | PlaybackStateCompat.ACTION_PAUSE;
                 break;
             case PlaybackStateCompat.STATE_PLAYING:
                 actions |= PlaybackStateCompat.ACTION_STOP
-                           | PlaybackStateCompat.ACTION_PAUSE
-                           | PlaybackStateCompat.ACTION_SEEK_TO;
+                        | PlaybackStateCompat.ACTION_PAUSE
+                        | PlaybackStateCompat.ACTION_SEEK_TO;
                 break;
             case PlaybackStateCompat.STATE_PAUSED:
                 actions |= PlaybackStateCompat.ACTION_PLAY
-                           | PlaybackStateCompat.ACTION_STOP;
+                        | PlaybackStateCompat.ACTION_STOP;
                 break;
             default:
                 actions |= PlaybackStateCompat.ACTION_PLAY
-                           | PlaybackStateCompat.ACTION_PLAY_PAUSE
-                           | PlaybackStateCompat.ACTION_STOP
-                           | PlaybackStateCompat.ACTION_PAUSE;
+                        | PlaybackStateCompat.ACTION_PLAY_PAUSE
+                        | PlaybackStateCompat.ACTION_STOP
+                        | PlaybackStateCompat.ACTION_PAUSE;
         }
         return actions;
     }

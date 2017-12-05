@@ -1,0 +1,125 @@
+-- Merging decision tree log ---
+manifest
+ADDED from /Users/xiaxveliang/a_Work/WorkSpack/ws/android-MediaBrowserService-master/Application/src/main/AndroidManifest.xml:17:1-63:12
+	package
+		ADDED from /Users/xiaxveliang/a_Work/WorkSpack/ws/android-MediaBrowserService-master/Application/src/main/AndroidManifest.xml:18:5-47
+	xmlns:android
+		ADDED from /Users/xiaxveliang/a_Work/WorkSpack/ws/android-MediaBrowserService-master/Application/src/main/AndroidManifest.xml:17:11-69
+uses-permission#android.permission.INTERNET
+ADDED from /Users/xiaxveliang/a_Work/WorkSpack/ws/android-MediaBrowserService-master/Application/src/main/AndroidManifest.xml:20:5-67
+	android:name
+		ADDED from /Users/xiaxveliang/a_Work/WorkSpack/ws/android-MediaBrowserService-master/Application/src/main/AndroidManifest.xml:20:22-64
+uses-permission#android.permission.WAKE_LOCK
+ADDED from /Users/xiaxveliang/a_Work/WorkSpack/ws/android-MediaBrowserService-master/Application/src/main/AndroidManifest.xml:21:5-68
+	android:name
+		ADDED from /Users/xiaxveliang/a_Work/WorkSpack/ws/android-MediaBrowserService-master/Application/src/main/AndroidManifest.xml:21:22-65
+application
+ADDED from /Users/xiaxveliang/a_Work/WorkSpack/ws/android-MediaBrowserService-master/Application/src/main/AndroidManifest.xml:23:5-61:19
+MERGED from [com.android.support:support-v13:26.1.0] /Users/xiaxveliang/.android/build-cache/3cb2290a080c5c0105afcc4b15bb9778e4cf83d4/output/AndroidManifest.xml:25:5-29:19
+MERGED from [com.android.support:cardview-v7:26.1.0] /Users/xiaxveliang/.android/build-cache/c3ba222c6036666ca5e00ae3314ab60d67e52132/output/AndroidManifest.xml:22:5-26:19
+MERGED from [com.android.support:appcompat-v7:26.1.0] /Users/xiaxveliang/.android/build-cache/d77749de8c90cf3ea29e070aced5ba2b2c2c3e61/output/AndroidManifest.xml:25:5-29:19
+MERGED from [com.android.support:support-v4:26.1.0] /Users/xiaxveliang/.android/build-cache/fd9ffa1836507975e66440cbff995aba945f85a3/output/AndroidManifest.xml:25:5-29:19
+MERGED from [com.android.support:support-media-compat:26.1.0] /Users/xiaxveliang/.android/build-cache/21c3b962cccd446e2a6e84c172df777e6425a75a/output/AndroidManifest.xml:25:5-29:19
+MERGED from [com.android.support:support-fragment:26.1.0] /Users/xiaxveliang/.android/build-cache/f3e97854fdc8f957bdf5e5c4412fb2cb0e59fe94/output/AndroidManifest.xml:25:5-29:19
+MERGED from [com.android.support:support-core-utils:26.1.0] /Users/xiaxveliang/.android/build-cache/7bbfb15e1362a11482c4cd0610ba79e768300875/output/AndroidManifest.xml:25:5-29:19
+MERGED from [com.android.support:animated-vector-drawable:26.1.0] /Users/xiaxveliang/.android/build-cache/0daa89114d23165979f4c7247857982994ecb025/output/AndroidManifest.xml:22:5-26:19
+MERGED from [com.android.support:support-vector-drawable:26.1.0] /Users/xiaxveliang/.android/build-cache/45d3f52df1f477b1e390ef6a1bc3f6842ff40755/output/AndroidManifest.xml:22:5-26:19
+MERGED from [com.android.support:support-core-ui:26.1.0] /Users/xiaxveliang/.android/build-cache/3dacabf514286bae51c4ec314892cf814d8b3bc0/output/AndroidManifest.xml:25:5-29:19
+MERGED from [com.android.support:support-compat:26.1.0] /Users/xiaxveliang/.android/build-cache/e34efa743680b63c8440b927b205d8b43fa0822b/output/AndroidManifest.xml:25:5-29:19
+MERGED from [android.arch.lifecycle:runtime:1.0.0] /Users/xiaxveliang/.android/build-cache/a3a6b18902a06a9c66b2c03f28f9f95699fae4cc/output/AndroidManifest.xml:24:5-28:19
+MERGED from [com.android.support.constraint:constraint-layout:1.0.2] /Users/xiaxveliang/.android/build-cache/4ff4015fe58e1d83f9abb0a1d7a1abf5ea188bfd/output/AndroidManifest.xml:9:5-20
+	android:label
+		ADDED from /Users/xiaxveliang/a_Work/WorkSpack/ws/android-MediaBrowserService-master/Application/src/main/AndroidManifest.xml:26:9-41
+	android:supportsRtl
+		ADDED from /Users/xiaxveliang/a_Work/WorkSpack/ws/android-MediaBrowserService-master/Application/src/main/AndroidManifest.xml:27:9-35
+	android:allowBackup
+		ADDED from /Users/xiaxveliang/a_Work/WorkSpack/ws/android-MediaBrowserService-master/Application/src/main/AndroidManifest.xml:24:9-35
+	android:icon
+		ADDED from /Users/xiaxveliang/a_Work/WorkSpack/ws/android-MediaBrowserService-master/Application/src/main/AndroidManifest.xml:25:9-43
+	android:theme
+		ADDED from /Users/xiaxveliang/a_Work/WorkSpack/ws/android-MediaBrowserService-master/Application/src/main/AndroidManifest.xml:28:9-40
+activity#com.example.android.mediasession.ui.MainActivity
+ADDED from /Users/xiaxveliang/a_Work/WorkSpack/ws/android-MediaBrowserService-master/Application/src/main/AndroidManifest.xml:29:9-37:20
+	android:launchMode
+		ADDED from /Users/xiaxveliang/a_Work/WorkSpack/ws/android-MediaBrowserService-master/Application/src/main/AndroidManifest.xml:31:13-43
+	android:name
+		ADDED from /Users/xiaxveliang/a_Work/WorkSpack/ws/android-MediaBrowserService-master/Application/src/main/AndroidManifest.xml:30:13-44
+intent-filter#android.intent.action.MAIN+android.intent.category.LAUNCHER
+ADDED from /Users/xiaxveliang/a_Work/WorkSpack/ws/android-MediaBrowserService-master/Application/src/main/AndroidManifest.xml:32:13-36:29
+action#android.intent.action.MAIN
+ADDED from /Users/xiaxveliang/a_Work/WorkSpack/ws/android-MediaBrowserService-master/Application/src/main/AndroidManifest.xml:33:17-69
+	android:name
+		ADDED from /Users/xiaxveliang/a_Work/WorkSpack/ws/android-MediaBrowserService-master/Application/src/main/AndroidManifest.xml:33:25-66
+category#android.intent.category.LAUNCHER
+ADDED from /Users/xiaxveliang/a_Work/WorkSpack/ws/android-MediaBrowserService-master/Application/src/main/AndroidManifest.xml:35:17-77
+	android:name
+		ADDED from /Users/xiaxveliang/a_Work/WorkSpack/ws/android-MediaBrowserService-master/Application/src/main/AndroidManifest.xml:35:27-74
+service#com.example.android.mediasession.service.MusicService
+ADDED from /Users/xiaxveliang/a_Work/WorkSpack/ws/android-MediaBrowserService-master/Application/src/main/AndroidManifest.xml:39:9-46:19
+	android:enabled
+		ADDED from /Users/xiaxveliang/a_Work/WorkSpack/ws/android-MediaBrowserService-master/Application/src/main/AndroidManifest.xml:41:13-35
+	android:exported
+		ADDED from /Users/xiaxveliang/a_Work/WorkSpack/ws/android-MediaBrowserService-master/Application/src/main/AndroidManifest.xml:42:13-36
+	android:name
+		ADDED from /Users/xiaxveliang/a_Work/WorkSpack/ws/android-MediaBrowserService-master/Application/src/main/AndroidManifest.xml:40:13-49
+intent-filter#android.media.browse.MediaBrowserService
+ADDED from /Users/xiaxveliang/a_Work/WorkSpack/ws/android-MediaBrowserService-master/Application/src/main/AndroidManifest.xml:43:13-45:29
+action#android.media.browse.MediaBrowserService
+ADDED from /Users/xiaxveliang/a_Work/WorkSpack/ws/android-MediaBrowserService-master/Application/src/main/AndroidManifest.xml:44:17-83
+	android:name
+		ADDED from /Users/xiaxveliang/a_Work/WorkSpack/ws/android-MediaBrowserService-master/Application/src/main/AndroidManifest.xml:44:25-80
+receiver#android.support.v4.media.session.MediaButtonReceiver
+ADDED from /Users/xiaxveliang/a_Work/WorkSpack/ws/android-MediaBrowserService-master/Application/src/main/AndroidManifest.xml:56:9-60:20
+	android:name
+		ADDED from /Users/xiaxveliang/a_Work/WorkSpack/ws/android-MediaBrowserService-master/Application/src/main/AndroidManifest.xml:56:19-86
+intent-filter#android.intent.action.MEDIA_BUTTON
+ADDED from /Users/xiaxveliang/a_Work/WorkSpack/ws/android-MediaBrowserService-master/Application/src/main/AndroidManifest.xml:57:13-59:29
+action#android.intent.action.MEDIA_BUTTON
+ADDED from /Users/xiaxveliang/a_Work/WorkSpack/ws/android-MediaBrowserService-master/Application/src/main/AndroidManifest.xml:58:17-77
+	android:name
+		ADDED from /Users/xiaxveliang/a_Work/WorkSpack/ws/android-MediaBrowserService-master/Application/src/main/AndroidManifest.xml:58:25-74
+uses-sdk
+INJECTED from /Users/xiaxveliang/a_Work/WorkSpack/ws/android-MediaBrowserService-master/Application/src/main/AndroidManifest.xml reason: use-sdk injection requested
+MERGED from [com.android.support:support-v13:26.1.0] /Users/xiaxveliang/.android/build-cache/3cb2290a080c5c0105afcc4b15bb9778e4cf83d4/output/AndroidManifest.xml:21:5-23:55
+MERGED from [com.android.support:cardview-v7:26.1.0] /Users/xiaxveliang/.android/build-cache/c3ba222c6036666ca5e00ae3314ab60d67e52132/output/AndroidManifest.xml:20:5-44
+MERGED from [com.android.support:appcompat-v7:26.1.0] /Users/xiaxveliang/.android/build-cache/d77749de8c90cf3ea29e070aced5ba2b2c2c3e61/output/AndroidManifest.xml:21:5-23:78
+MERGED from [com.android.support:support-v4:26.1.0] /Users/xiaxveliang/.android/build-cache/fd9ffa1836507975e66440cbff995aba945f85a3/output/AndroidManifest.xml:21:5-23:54
+MERGED from [com.android.support:support-media-compat:26.1.0] /Users/xiaxveliang/.android/build-cache/21c3b962cccd446e2a6e84c172df777e6425a75a/output/AndroidManifest.xml:21:5-23:63
+MERGED from [com.android.support:support-fragment:26.1.0] /Users/xiaxveliang/.android/build-cache/f3e97854fdc8f957bdf5e5c4412fb2cb0e59fe94/output/AndroidManifest.xml:21:5-23:60
+MERGED from [com.android.support:support-core-utils:26.1.0] /Users/xiaxveliang/.android/build-cache/7bbfb15e1362a11482c4cd0610ba79e768300875/output/AndroidManifest.xml:21:5-23:61
+MERGED from [com.android.support:animated-vector-drawable:26.1.0] /Users/xiaxveliang/.android/build-cache/0daa89114d23165979f4c7247857982994ecb025/output/AndroidManifest.xml:20:5-44
+MERGED from [com.android.support:support-vector-drawable:26.1.0] /Users/xiaxveliang/.android/build-cache/45d3f52df1f477b1e390ef6a1bc3f6842ff40755/output/AndroidManifest.xml:20:5-44
+MERGED from [com.android.support:support-core-ui:26.1.0] /Users/xiaxveliang/.android/build-cache/3dacabf514286bae51c4ec314892cf814d8b3bc0/output/AndroidManifest.xml:21:5-23:58
+MERGED from [com.android.support:support-compat:26.1.0] /Users/xiaxveliang/.android/build-cache/e34efa743680b63c8440b927b205d8b43fa0822b/output/AndroidManifest.xml:21:5-23:58
+MERGED from [android.arch.lifecycle:runtime:1.0.0] /Users/xiaxveliang/.android/build-cache/a3a6b18902a06a9c66b2c03f28f9f95699fae4cc/output/AndroidManifest.xml:20:5-22:41
+MERGED from [com.android.support.constraint:constraint-layout:1.0.2] /Users/xiaxveliang/.android/build-cache/4ff4015fe58e1d83f9abb0a1d7a1abf5ea188bfd/output/AndroidManifest.xml:5:5-7:41
+	tools:overrideLibrary
+		ADDED from [com.android.support:support-v13:26.1.0] /Users/xiaxveliang/.android/build-cache/3cb2290a080c5c0105afcc4b15bb9778e4cf83d4/output/AndroidManifest.xml:23:9-52
+	android:targetSdkVersion
+		INJECTED from /Users/xiaxveliang/a_Work/WorkSpack/ws/android-MediaBrowserService-master/Application/src/main/AndroidManifest.xml
+		INJECTED from /Users/xiaxveliang/a_Work/WorkSpack/ws/android-MediaBrowserService-master/Application/src/main/AndroidManifest.xml
+	android:minSdkVersion
+		INJECTED from /Users/xiaxveliang/a_Work/WorkSpack/ws/android-MediaBrowserService-master/Application/src/main/AndroidManifest.xml
+		INJECTED from /Users/xiaxveliang/a_Work/WorkSpack/ws/android-MediaBrowserService-master/Application/src/main/AndroidManifest.xml
+meta-data#android.support.VERSION
+ADDED from [com.android.support:support-v13:26.1.0] /Users/xiaxveliang/.android/build-cache/3cb2290a080c5c0105afcc4b15bb9778e4cf83d4/output/AndroidManifest.xml:26:9-28:38
+MERGED from [com.android.support:cardview-v7:26.1.0] /Users/xiaxveliang/.android/build-cache/c3ba222c6036666ca5e00ae3314ab60d67e52132/output/AndroidManifest.xml:23:9-25:38
+MERGED from [com.android.support:appcompat-v7:26.1.0] /Users/xiaxveliang/.android/build-cache/d77749de8c90cf3ea29e070aced5ba2b2c2c3e61/output/AndroidManifest.xml:26:9-28:38
+MERGED from [com.android.support:support-v4:26.1.0] /Users/xiaxveliang/.android/build-cache/fd9ffa1836507975e66440cbff995aba945f85a3/output/AndroidManifest.xml:26:9-28:38
+MERGED from [com.android.support:support-media-compat:26.1.0] /Users/xiaxveliang/.android/build-cache/21c3b962cccd446e2a6e84c172df777e6425a75a/output/AndroidManifest.xml:26:9-28:38
+MERGED from [com.android.support:support-fragment:26.1.0] /Users/xiaxveliang/.android/build-cache/f3e97854fdc8f957bdf5e5c4412fb2cb0e59fe94/output/AndroidManifest.xml:26:9-28:38
+MERGED from [com.android.support:support-core-utils:26.1.0] /Users/xiaxveliang/.android/build-cache/7bbfb15e1362a11482c4cd0610ba79e768300875/output/AndroidManifest.xml:26:9-28:38
+MERGED from [com.android.support:animated-vector-drawable:26.1.0] /Users/xiaxveliang/.android/build-cache/0daa89114d23165979f4c7247857982994ecb025/output/AndroidManifest.xml:23:9-25:38
+MERGED from [com.android.support:support-vector-drawable:26.1.0] /Users/xiaxveliang/.android/build-cache/45d3f52df1f477b1e390ef6a1bc3f6842ff40755/output/AndroidManifest.xml:23:9-25:38
+MERGED from [com.android.support:support-core-ui:26.1.0] /Users/xiaxveliang/.android/build-cache/3dacabf514286bae51c4ec314892cf814d8b3bc0/output/AndroidManifest.xml:26:9-28:38
+MERGED from [com.android.support:support-compat:26.1.0] /Users/xiaxveliang/.android/build-cache/e34efa743680b63c8440b927b205d8b43fa0822b/output/AndroidManifest.xml:26:9-28:38
+	android:value
+		ADDED from [com.android.support:support-v13:26.1.0] /Users/xiaxveliang/.android/build-cache/3cb2290a080c5c0105afcc4b15bb9778e4cf83d4/output/AndroidManifest.xml:28:13-35
+	android:name
+		ADDED from [com.android.support:support-v13:26.1.0] /Users/xiaxveliang/.android/build-cache/3cb2290a080c5c0105afcc4b15bb9778e4cf83d4/output/AndroidManifest.xml:27:13-51
+meta-data#android.arch.lifecycle.VERSION
+ADDED from [android.arch.lifecycle:runtime:1.0.0] /Users/xiaxveliang/.android/build-cache/a3a6b18902a06a9c66b2c03f28f9f95699fae4cc/output/AndroidManifest.xml:25:9-27:47
+	android:value
+		ADDED from [android.arch.lifecycle:runtime:1.0.0] /Users/xiaxveliang/.android/build-cache/a3a6b18902a06a9c66b2c03f28f9f95699fae4cc/output/AndroidManifest.xml:27:13-44
+	android:name
+		ADDED from [android.arch.lifecycle:runtime:1.0.0] /Users/xiaxveliang/.android/build-cache/a3a6b18902a06a9c66b2c03f28f9f95699fae4cc/output/AndroidManifest.xml:26:13-58
