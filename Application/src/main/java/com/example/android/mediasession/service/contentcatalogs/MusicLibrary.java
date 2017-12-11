@@ -116,13 +116,24 @@ public class MusicLibrary {
         return result;
     }
 
+
+    /**
+     * 拷贝一份音频数据
+     *
+     * @param context
+     * @param mediaId
+     * @return
+     */
     public static MediaMetadataCompat getMetadata(Context context, String mediaId) {
+        // 根据id 音频列表获取音频数据
         MediaMetadataCompat metadataWithoutBitmap = music.get(mediaId);
+        // 获取音频图片数据
         Bitmap albumArt = getAlbumBitmap(context, mediaId);
 
         // Since MediaMetadataCompat is immutable, we need to create a copy to set the album art.
         // We don't set it initially on all items so that they don't take unnecessary memory.
         MediaMetadataCompat.Builder builder = new MediaMetadataCompat.Builder();
+        // 设置数据
         for (String key :
                 new String[]{
                         MediaMetadataCompat.METADATA_KEY_MEDIA_ID,
@@ -133,9 +144,11 @@ public class MusicLibrary {
                 }) {
             builder.putString(key, metadataWithoutBitmap.getString(key));
         }
+        //
         builder.putLong(
                 MediaMetadataCompat.METADATA_KEY_DURATION,
                 metadataWithoutBitmap.getLong(MediaMetadataCompat.METADATA_KEY_DURATION));
+        // 添加图片
         builder.putBitmap(MediaMetadataCompat.METADATA_KEY_ALBUM_ART, albumArt);
         return builder.build();
     }

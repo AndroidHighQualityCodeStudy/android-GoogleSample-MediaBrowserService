@@ -42,11 +42,11 @@ import java.util.List;
  */
 public class MusicService extends MediaBrowserServiceCompat {
 
-    private static final String TAG = MusicService.class.getSimpleName();
+    private static final String TAG = "MusicService";
 
 
     //
-    private PlayerAdapter mPlayback;
+    private PlayerAdapter mMediaPlayerAdapter;
     private MediaNotificationManager mMediaNotificationManager;
 
     private boolean mServiceInStartedState;
@@ -56,9 +56,7 @@ public class MusicService extends MediaBrowserServiceCompat {
      *
      */
     // 与MediaControl交互的MediaSessionCompat
-    private MediaSessionCompat mMediaSessionCompat;
-    // MediaSession回调
-    private MediaSessionCallback mMediaSessionCallback;
+    private MediaSessionCompat mMediaSession;
 
     @Override
     public void onCreate() {
@@ -66,28 +64,28 @@ public class MusicService extends MediaBrowserServiceCompat {
 
 
         /**
-         *
+         * MediaSessionCompat
          */
         // 创建MediaSessionCompat
-        mMediaSessionCompat = new MediaSessionCompat(this, "MusicService");
-        // 创建MediaSessionCallback
-        mMediaSessionCallback = new MediaSessionCallback();
+        mMediaSession = new MediaSessionCompat(this, "MusicService");
         // setCallBack
-        mMediaSessionCompat.setCallback(mMediaSessionCallback);
-        mMediaSessionCompat.setFlags(
+        mMediaSession.setCallback(new MediaSessionCallback());
+        mMediaSession.setFlags(
                 MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS |
                         MediaSessionCompat.FLAG_HANDLES_QUEUE_COMMANDS |
                         MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS);
         // setSessionToken
-        setSessionToken(mMediaSessionCompat.getSessionToken());
+        setSessionToken(mMediaSession.getSessionToken());
 
         /**
-         *
+         * MediaNotificationManager
          */
         mMediaNotificationManager = new MediaNotificationManager(this);
 
-        mPlayback = new MediaPlayerAdapter(this, new MediaPlayerListener());
-        Log.d(TAG, "onCreate: MusicService creating MediaSession, and MediaNotificationManager");
+        /**
+         * MediaPlayerAdapter
+         */
+        mMediaPlayerAdapter = new MediaPlayerAdapter(this, new MediaPlayerListener());
     }
 
     @Override
@@ -99,8 +97,8 @@ public class MusicService extends MediaBrowserServiceCompat {
     @Override
     public void onDestroy() {
         mMediaNotificationManager.onDestroy();
-        mPlayback.stop();
-        mMediaSessionCompat.release();
+        mMediaPlayerAdapter.stop();
+        mMediaSession.release();
         Log.d(TAG, "onDestroy: MediaPlayerAdapter stopped, and MediaSession released");
     }
 
@@ -123,8 +121,11 @@ public class MusicService extends MediaBrowserServiceCompat {
 
     /**
      * MediaSessionCallback
+     * <p>
+     * 用户对UI的操作将最终回调到这里。通过MediaSessionCallback 操作播放器
+     * <p>
+     * The callback class will receive all the user's actions, like play, pause, etc;
      */
-    // MediaSession Callback: Transport Controls -> MediaPlayerAdapter
     public class MediaSessionCallback extends MediaSessionCompat.Callback {
         // 播放列表
         private final List<MediaSessionCompat.QueueItem> mPlaylist = new ArrayList<>();
@@ -154,38 +155,42 @@ public class MusicService extends MediaBrowserServiceCompat {
             }
 
             final String mediaId = mPlaylist.get(mQueueIndex).getDescription().getMediaId();
+            // 根据音频 获取音频数据
             mPreparedMedia = MusicLibrary.getMetadata(MusicService.this, mediaId);
-            mMediaSessionCompat.setMetadata(mPreparedMedia);
-
-            if (!mMediaSessionCompat.isActive()) {
-                mMediaSessionCompat.setActive(true);
+            // 设置音频数据
+            // 该方法将回调到 Client 的 MediaControllerCallback.onMetadataChanged
+            mMediaSession.setMetadata(mPreparedMedia);
+            // 激活mediaSession
+            if (!mMediaSession.isActive()) {
+                mMediaSession.setActive(true);
             }
         }
 
         @Override
         public void onPlay() {
+            //
             if (!isReadyToPlay()) {
                 // Nothing to play.
                 return;
             }
-
+            // 准备数据
             if (mPreparedMedia == null) {
                 onPrepare();
             }
-
-            mPlayback.playFromMedia(mPreparedMedia);
+            // 播放
+            mMediaPlayerAdapter.playFromMedia(mPreparedMedia);
             Log.d(TAG, "onPlayFromMediaId: MediaSession active");
         }
 
         @Override
         public void onPause() {
-            mPlayback.pause();
+            mMediaPlayerAdapter.pause();
         }
 
         @Override
         public void onStop() {
-            mPlayback.stop();
-            mMediaSessionCompat.setActive(false);
+            mMediaPlayerAdapter.stop();
+            mMediaSession.setActive(false);
         }
 
         @Override
@@ -204,9 +209,14 @@ public class MusicService extends MediaBrowserServiceCompat {
 
         @Override
         public void onSeekTo(long pos) {
-            mPlayback.seekTo(pos);
+            mMediaPlayerAdapter.seekTo(pos);
         }
 
+        /**
+         * 判断列表数据状态
+         *
+         * @return
+         */
         private boolean isReadyToPlay() {
             return (!mPlaylist.isEmpty());
         }
@@ -216,7 +226,9 @@ public class MusicService extends MediaBrowserServiceCompat {
     // #################################################################################
 
 
-    // MediaPlayerAdapter Callback: MediaPlayerAdapter state -> MusicService.
+    /**
+     * MediaPlayer 播放状态回调
+     */
     public class MediaPlayerListener extends PlaybackInfoListener {
 
         private final ServiceManager mServiceManager;
@@ -227,8 +239,8 @@ public class MusicService extends MediaBrowserServiceCompat {
 
         @Override
         public void onPlaybackStateChange(PlaybackStateCompat state) {
-            // Report the state to the MediaSession.
-            mMediaSessionCompat.setPlaybackState(state);
+            // 最终回调到Client 的 MediaControllerCallback.onPlaybackStateChanged
+            mMediaSession.setPlaybackState(state);
 
             // Manage the started state of this service.
             switch (state.getState()) {
@@ -249,7 +261,7 @@ public class MusicService extends MediaBrowserServiceCompat {
             private void moveServiceToStartedState(PlaybackStateCompat state) {
                 Notification notification =
                         mMediaNotificationManager.getNotification(
-                                mPlayback.getCurrentMedia(), state, getSessionToken());
+                                mMediaPlayerAdapter.getCurrentMedia(), state, getSessionToken());
 
                 if (!mServiceInStartedState) {
                     ContextCompat.startForegroundService(
@@ -265,7 +277,7 @@ public class MusicService extends MediaBrowserServiceCompat {
                 stopForeground(false);
                 Notification notification =
                         mMediaNotificationManager.getNotification(
-                                mPlayback.getCurrentMedia(), state, getSessionToken());
+                                mMediaPlayerAdapter.getCurrentMedia(), state, getSessionToken());
                 mMediaNotificationManager.getNotificationManager()
                         .notify(MediaNotificationManager.NOTIFICATION_ID, notification);
             }

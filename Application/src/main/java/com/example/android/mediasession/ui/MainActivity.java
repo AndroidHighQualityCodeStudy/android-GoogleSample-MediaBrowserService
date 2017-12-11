@@ -17,142 +17,264 @@
 package com.example.android.mediasession.ui;
 
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.MediaControllerCompat;
+import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.SeekBar;
 import android.widget.TextView;
 
 import com.example.android.mediasession.R;
 import com.example.android.mediasession.client.MediaBrowserAdapter;
 import com.example.android.mediasession.service.contentcatalogs.MusicLibrary;
 
+import java.util.List;
+
 public class MainActivity extends AppCompatActivity {
 
 
+    /**
+     * UI
+     */
     // 歌曲标题
-    private TextView mTitleTextView;
+    private TextView mTitleTv;
     // 歌曲作者
-    private TextView mArtistTextView;
+    private TextView mArtistTv;
     // 歌曲图片
-    private ImageView mAlbumArt;
-    // 播放器控制器背景
-    private ImageView mMediaControlsImage;
+    private ImageView mAlbumArtImg;
+    // 播放控制器 背景
+    private View mControlBgLayout;
+
     // seekbar
     private MediaSeekBar mSeekBarAudio;
 
+    /**
+     * 数据
+     */
+    // 是否正在播放的标识
+    private boolean mIsPlaying;
     //
     private MediaBrowserAdapter mMediaBrowserAdapter;
-
-    /**
-     *
-     */
-    private boolean mIsPlaying;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        //
-        initializeUI();
-        //
-        mMediaBrowserAdapter = new MediaBrowserAdapter(this);
-        mMediaBrowserAdapter.addListener(new MediaBrowserListener());
+
+        // 初始化UI
+        initUI();
+        // 初始化MediaBrowser
+        initMediaBrowser();
     }
 
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        //
+        if (mMediaBrowserAdapter != null) {
+            mMediaBrowserAdapter.onStart();
+        }
+    }
+
+    @Override
+    public void onStop() {
+        super.onStop();
+        //
+        if (mMediaBrowserAdapter != null) {
+            mMediaBrowserAdapter.onStop();
+        }
+
+    }
+
+
     /**
-     *
+     * 初始化UI
      */
-    private void initializeUI() {
+    private void initUI() {
         // 歌曲标题
-        mTitleTextView = (TextView) findViewById(R.id.song_title);
+        mTitleTv = (TextView) findViewById(R.id.song_title_tv);
         // 歌曲作者
-        mArtistTextView = (TextView) findViewById(R.id.song_artist);
+        mArtistTv = (TextView) findViewById(R.id.song_artist_tv);
         // 歌曲图片
-        mAlbumArt = (ImageView) findViewById(R.id.album_art);
-        // 播放器控制器背景
-        mMediaControlsImage = (ImageView) findViewById(R.id.media_controls);
-        // seekbar
-        mSeekBarAudio = (MediaSeekBar) findViewById(R.id.seekbar_audio);
+        mAlbumArtImg = (ImageView) findViewById(R.id.album_art_img);
+        // 播放控制器背景
+        mControlBgLayout = findViewById(R.id.control_bg_layout);
+
         // 上一首
-        final Button buttonPrevious = (Button) findViewById(R.id.button_previous);
-        buttonPrevious.setOnClickListener(new View.OnClickListener() {
+        final Button previousBtn = (Button) findViewById(R.id.previous_btn);
+        previousBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 mMediaBrowserAdapter.getTransportControls().skipToPrevious();
             }
         });
         // 播放按钮
-        final Button buttonPlay = (Button) findViewById(R.id.button_play);
-        buttonPlay.setOnClickListener(new View.OnClickListener() {
+        final Button playBtn = (Button) findViewById(R.id.play_btn);
+        playBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 if (mIsPlaying) {
                     mMediaBrowserAdapter.getTransportControls().pause();
+                    //
                 } else {
                     mMediaBrowserAdapter.getTransportControls().play();
                 }
             }
         });
         // 下一首
-        final Button buttonNext = (Button) findViewById(R.id.button_next);
-        buttonNext.setOnClickListener(new View.OnClickListener() {
+        final Button nextBtn = (Button) findViewById(R.id.next_btn);
+        nextBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 mMediaBrowserAdapter.getTransportControls().skipToNext();
             }
         });
-    }
-
-    @Override
-    public void onStart() {
-        super.onStart();
-        mMediaBrowserAdapter.onStart();
-    }
-
-    @Override
-    public void onStop() {
-        super.onStop();
-        mSeekBarAudio.disconnectController();
-        mMediaBrowserAdapter.onStop();
-    }
-
-    private class MediaBrowserListener extends MediaBrowserAdapter.MediaBrowserChangeListener {
-
-        @Override
-        public void onConnected(@Nullable MediaControllerCompat mediaController) {
-            super.onConnected(mediaController);
-            mSeekBarAudio.setMediaController(mediaController);
-        }
-
-        @Override
-        public void onPlaybackStateChanged(PlaybackStateCompat playbackState) {
-            // 正在播放
-            mIsPlaying = playbackState != null &&
-                    playbackState.getState() == PlaybackStateCompat.STATE_PLAYING;
-            // 这是要干什么??????????
-            mMediaControlsImage.setPressed(mIsPlaying);
-        }
-
-        @Override
-        public void onMetadataChanged(MediaMetadataCompat mediaMetadata) {
-            if (mediaMetadata == null) {
-                return;
+        // seekbar
+        mSeekBarAudio = (MediaSeekBar) findViewById(R.id.seekbar_audio);
+        mSeekBarAudio.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                //
             }
-            // 音频的标题
-            mTitleTextView.setText(
-                    mediaMetadata.getString(MediaMetadataCompat.METADATA_KEY_TITLE));
-            // 音频作者
-            mArtistTextView.setText(
-                    mediaMetadata.getString(MediaMetadataCompat.METADATA_KEY_ARTIST));
-            // 音频图片
-            mAlbumArt.setImageBitmap(MusicLibrary.getAlbumBitmap(
-                    MainActivity.this,
-                    mediaMetadata.getString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID)));
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+                //
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+                // seek
+                mMediaBrowserAdapter.seekTo(seekBar.getProgress());
+            }
+        });
+    }
+
+    /**
+     * 初始化 MediaBrowser
+     */
+    private void initMediaBrowser() {
+
+        mMediaBrowserAdapter = new MediaBrowserAdapter(this);
+        mMediaBrowserAdapter.addOnMediaStatusListener(new MediaBrowserAdapter.OnMediaStatusChangeListener() {
+
+            /**
+             * 播放状态修改
+             */
+            @Override
+            public void onPlaybackStateChanged(@NonNull PlaybackStateCompat state) {
+                // 播放音频 状态变化
+                onMediaPlaybackStateChanged(state);
+            }
+
+            /**
+             * 当前播放歌曲信息修改
+             */
+            @Override
+            public void onMetadataChanged(MediaMetadataCompat metadata) {
+                // 播放音频变化的回调
+                onMediaMetadataChanged(metadata);
+            }
+
+            /**
+             * 播放队列修改
+             */
+            @Override
+            public void onQueueChanged(List<MediaSessionCompat.QueueItem> queue) {
+
+            }
+        });
+    }
+
+
+    /**
+     * 更改播放按钮背景状态
+     *
+     * @param isPlaying
+     */
+    private void setControlBg(boolean isPlaying) {
+        if (isPlaying) {
+            mControlBgLayout.setBackgroundResource(R.drawable.ic_media_with_pause);
+        } else {
+            mControlBgLayout.setBackgroundResource(R.drawable.ic_media_with_play);
         }
     }
+
+
+    // ############################################################################################
+
+
+    /**
+     * 音频播放状态变化的回调
+     *
+     * @param playbackState
+     */
+    private void onMediaPlaybackStateChanged(PlaybackStateCompat playbackState) {
+        if (playbackState == null) {
+            return;
+        }
+        // 正在播放
+        mIsPlaying =
+                playbackState.getState() == PlaybackStateCompat.STATE_PLAYING;
+
+        // 更新UI
+        setControlBg(mIsPlaying);
+
+        /**
+         * 设置播放进度
+         */
+        final int progress = (int) playbackState.getPosition();
+        mSeekBarAudio.setProgress(progress);
+        switch (playbackState.getState()) {
+            case PlaybackStateCompat.STATE_PLAYING:
+                final int timeToEnd = (int) ((mSeekBarAudio.getMax() - progress) / playbackState.getPlaybackSpeed());
+                mSeekBarAudio.startProgressAnima(progress, mSeekBarAudio.getMax(), timeToEnd);
+                break;
+            case PlaybackStateCompat.STATE_PAUSED:
+                mSeekBarAudio.stopProgressAnima();
+                break;
+
+        }
+
+    }
+
+
+    /**
+     * 播放音频数据 发生变化的回调
+     *
+     * @param mediaMetadata
+     */
+    private void onMediaMetadataChanged(MediaMetadataCompat mediaMetadata) {
+        if (mediaMetadata == null) {
+            return;
+        }
+        // 音频的标题
+        mTitleTv.setText(
+                mediaMetadata.getString(MediaMetadataCompat.METADATA_KEY_TITLE));
+        // 音频作者
+        mArtistTv.setText(
+                mediaMetadata.getString(MediaMetadataCompat.METADATA_KEY_ARTIST));
+        // 音频图片
+        mAlbumArtImg.setImageBitmap(MusicLibrary.getAlbumBitmap(
+                MainActivity.this,
+                mediaMetadata.getString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID)));
+
+        // 进度条
+        final int max = mediaMetadata != null
+                ? (int) mediaMetadata.getLong(MediaMetadataCompat.METADATA_KEY_DURATION)
+                : 0;
+        mSeekBarAudio.setProgress(0);
+        mSeekBarAudio.setMax(max);
+    }
+
+    // ############################################################################################
+
+
 }

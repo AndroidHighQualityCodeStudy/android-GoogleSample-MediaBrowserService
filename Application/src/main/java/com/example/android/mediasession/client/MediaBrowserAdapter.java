@@ -41,34 +41,6 @@ public class MediaBrowserAdapter {
 
     private static final String TAG = "MediaBrowserAdapter";
 
-    /**
-     * Helper class for easily subscribing to changes in a MediaBrowserService connection.
-     */
-    public static abstract class MediaBrowserChangeListener {
-
-        /**
-         * 链接状态
-         *
-         * @param mediaController
-         */
-        public void onConnected(@Nullable MediaControllerCompat mediaController) {
-        }
-
-        /**
-         * 音频变化
-         *
-         * @param mediaMetadata
-         */
-        public void onMetadataChanged(@Nullable MediaMetadataCompat mediaMetadata) {
-        }
-
-        /**
-         * @param playbackState
-         */
-        public void onPlaybackStateChanged(@Nullable PlaybackStateCompat playbackState) {
-        }
-    }
-
 
     private final Context mContext;
 
@@ -85,8 +57,6 @@ public class MediaBrowserAdapter {
 
     // 存储播放状态与数据
     private final InternalState mState;
-    // 音频变化回调
-    private final List<MediaBrowserChangeListener> mListeners = new ArrayList<>();
 
     // 连接回调
     private final MediaBrowserConnectionCallback mMediaBrowserConnectionCallback =
@@ -150,14 +120,21 @@ public class MediaBrowserAdapter {
     private void resetState() {
         // service被杀死后，数据置空
         mState.reset();
-        // 回调onPlaybackStateChanged null
-        performOnAllListeners(new ListenerCommand() {
-            @Override
-            public void perform(@NonNull MediaBrowserChangeListener listener) {
-                listener.onPlaybackStateChanged(null);
-            }
-        });
+
         Log.d(TAG, "resetState: ");
+    }
+
+
+    /**
+     * seekTo
+     *
+     * @param pos
+     */
+    public void seekTo(long pos) {
+        // 音频seek
+        if (mMediaController != null) {
+            mMediaController.getTransportControls().seekTo(pos);
+        }
     }
 
 
@@ -172,58 +149,6 @@ public class MediaBrowserAdapter {
             throw new IllegalStateException();
         }
         return mMediaController.getTransportControls();
-    }
-
-
-    /**
-     * 设置音频变化回调
-     *
-     * @param listener
-     */
-    public void addListener(MediaBrowserChangeListener listener) {
-        if (listener != null) {
-            mListeners.add(listener);
-        }
-    }
-
-    /**
-     * 移除音频变化回调监听
-     *
-     * @param listener
-     */
-    public void removeListener(MediaBrowserChangeListener listener) {
-        if (listener != null) {
-            if (mListeners.contains(listener)) {
-                mListeners.remove(listener);
-            }
-        }
-    }
-
-
-    /**
-     * 回调音频发生变化
-     */
-    public interface ListenerCommand {
-
-        void perform(@NonNull MediaBrowserChangeListener listener);
-    }
-
-    /**
-     * 回调所有的观察者，数据发生了变化
-     *
-     * @param command
-     */
-    public void performOnAllListeners(@NonNull ListenerCommand command) {
-        for (MediaBrowserChangeListener listener : mListeners) {
-            if (listener != null) {
-                try {
-                    command.perform(listener);
-                } catch (Exception e) {
-                    // 移除监听
-                    removeListener(listener);
-                }
-            }
-        }
     }
 
 
@@ -255,15 +180,7 @@ public class MediaBrowserAdapter {
                 mMediaControllerCallback
                         .onPlaybackStateChanged(mMediaController.getPlaybackState());
 
-                /**
-                 * 回调链接成功
-                 */
-                performOnAllListeners(new ListenerCommand() {
-                    @Override
-                    public void perform(@NonNull MediaBrowserChangeListener listener) {
-                        listener.onConnected(mMediaController);
-                    }
-                });
+
             } catch (RemoteException e) {
                 Log.d(TAG, String.format("onConnected: Problem: %s", e.toString()));
                 throw new RuntimeException(e);
@@ -301,12 +218,21 @@ public class MediaBrowserAdapter {
         }
     }
 
-    // Receives callbacks from the MediaController and updates the UI state,
-    // i.e.: Which is the current item, whether it's playing or paused, etc.
+
+    /**
+     * service 通过MediaControllerCallback 回调到client
+     */
     public class MediaControllerCallback extends MediaControllerCompat.Callback {
 
         @Override
         public void onMetadataChanged(final MediaMetadataCompat metadata) {
+
+
+            for (OnMediaStatusChangeListener callback : mMediaStatusChangeListenerList) {
+                callback.onMetadataChanged(metadata);
+            }
+
+
             // Filtering out needless updates, given that the metadata has not changed.
             if (isMediaIdSame(metadata, mState.getMediaMetadata())) {
                 Log.d(TAG, "onMetadataChanged: Filtering out needless onMetadataChanged() update");
@@ -315,28 +241,29 @@ public class MediaBrowserAdapter {
                 // 设置音频数据
                 mState.setMediaMetadata(metadata);
             }
-            // 回调音频发生变化
-            performOnAllListeners(new ListenerCommand() {
-                @Override
-                public void perform(@NonNull MediaBrowserChangeListener listener) {
-                    // 回调观察者，数据发生了变化
-                    listener.onMetadataChanged(metadata);
-                }
-            });
+
         }
 
         @Override
         public void onPlaybackStateChanged(@Nullable final PlaybackStateCompat state) {
+
+
+            for (OnMediaStatusChangeListener callback : mMediaStatusChangeListenerList) {
+                callback.onPlaybackStateChanged(state);
+            }
+
             // 设置播放状态数据
             mState.setPlaybackState(state);
-            // 回调所有的观察者，播放状态发生了变化
-            performOnAllListeners(new ListenerCommand() {
-                @Override
-                public void perform(@NonNull MediaBrowserChangeListener listener) {
-                    // 播放状态发生变化
-                    listener.onPlaybackStateChanged(state);
-                }
-            });
+        }
+
+        @Override
+        public void onQueueChanged(List<MediaSessionCompat.QueueItem> queue) {
+            super.onQueueChanged(queue);
+
+
+            for (OnMediaStatusChangeListener callback : mMediaStatusChangeListenerList) {
+                callback.onQueueChanged(queue);
+            }
         }
 
         // service被杀死时调用
@@ -344,6 +271,7 @@ public class MediaBrowserAdapter {
         // foreground and onStart() has been called (but not onStop()).
         @Override
         public void onSessionDestroyed() {
+
             resetState();
             onPlaybackStateChanged(null);
             Log.d(TAG, "onSessionDestroyed: MusicService is dead!!!");
@@ -407,5 +335,40 @@ public class MediaBrowserAdapter {
             this.mediaMetadata = mediaMetadata;
         }
     }
+
+
+    // ###########################################################################################
+
+    // 音频变化的回调
+    private List<OnMediaStatusChangeListener> mMediaStatusChangeListenerList = new ArrayList<>();
+
+    //
+    public void addOnMediaStatusListener(OnMediaStatusChangeListener l) {
+        mMediaStatusChangeListenerList.add(l);
+    }
+
+    public void removeOnMediaStatusListener(OnMediaStatusChangeListener l) {
+        mMediaStatusChangeListenerList.remove(l);
+    }
+
+
+    public interface OnMediaStatusChangeListener {
+
+        /**
+         * 播放状态修改
+         */
+        void onPlaybackStateChanged(@NonNull PlaybackStateCompat state);
+
+        /**
+         * 当前播放歌曲信息修改
+         */
+        void onMetadataChanged(MediaMetadataCompat metadata);
+
+        /**
+         * 播放队列修改
+         */
+        void onQueueChanged(List<MediaSessionCompat.QueueItem> queue);
+    }
+
 
 }
