@@ -18,9 +18,7 @@ package com.example.android.mediasession.ui;
 
 import android.os.Bundle;
 import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.support.v4.media.MediaMetadataCompat;
-import android.support.v4.media.session.MediaControllerCompat;
 import android.support.v4.media.session.MediaSessionCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -31,7 +29,7 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 
 import com.example.android.mediasession.R;
-import com.example.android.mediasession.client.MediaBrowserAdapter;
+import com.example.android.mediasession.client.MediaBrowserManager;
 import com.example.android.mediasession.service.contentcatalogs.MusicLibrary;
 
 import java.util.List;
@@ -60,7 +58,7 @@ public class MainActivity extends AppCompatActivity {
     // 是否正在播放的标识
     private boolean mIsPlaying;
     //
-    private MediaBrowserAdapter mMediaBrowserAdapter;
+    private MediaBrowserManager mMediaBrowserManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -78,8 +76,8 @@ public class MainActivity extends AppCompatActivity {
     public void onStart() {
         super.onStart();
         //
-        if (mMediaBrowserAdapter != null) {
-            mMediaBrowserAdapter.onStart();
+        if (mMediaBrowserManager != null) {
+            mMediaBrowserManager.onStart();
         }
     }
 
@@ -87,8 +85,8 @@ public class MainActivity extends AppCompatActivity {
     public void onStop() {
         super.onStop();
         //
-        if (mMediaBrowserAdapter != null) {
-            mMediaBrowserAdapter.onStop();
+        if (mMediaBrowserManager != null) {
+            mMediaBrowserManager.onStop();
         }
 
     }
@@ -112,7 +110,7 @@ public class MainActivity extends AppCompatActivity {
         previousBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mMediaBrowserAdapter.getTransportControls().skipToPrevious();
+                mMediaBrowserManager.getTransportControls().skipToPrevious();
             }
         });
         // 播放按钮
@@ -121,10 +119,10 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 if (mIsPlaying) {
-                    mMediaBrowserAdapter.getTransportControls().pause();
+                    mMediaBrowserManager.getTransportControls().pause();
                     //
                 } else {
-                    mMediaBrowserAdapter.getTransportControls().play();
+                    mMediaBrowserManager.getTransportControls().play();
                 }
             }
         });
@@ -133,7 +131,7 @@ public class MainActivity extends AppCompatActivity {
         nextBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mMediaBrowserAdapter.getTransportControls().skipToNext();
+                mMediaBrowserManager.getTransportControls().skipToNext();
             }
         });
         // seekbar
@@ -152,7 +150,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
                 // seek
-                mMediaBrowserAdapter.seekTo(seekBar.getProgress());
+                mMediaBrowserManager.getTransportControls().seekTo(seekBar.getProgress());
             }
         });
     }
@@ -162,8 +160,8 @@ public class MainActivity extends AppCompatActivity {
      */
     private void initMediaBrowser() {
 
-        mMediaBrowserAdapter = new MediaBrowserAdapter(this);
-        mMediaBrowserAdapter.addOnMediaStatusListener(new MediaBrowserAdapter.OnMediaStatusChangeListener() {
+        mMediaBrowserManager = new MediaBrowserManager(this);
+        mMediaBrowserManager.addOnMediaStatusListener(new MediaBrowserManager.OnMediaStatusChangeListener() {
 
             /**
              * 播放状态修改

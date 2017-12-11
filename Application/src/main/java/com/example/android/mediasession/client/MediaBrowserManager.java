@@ -37,43 +37,40 @@ import java.util.List;
  * Adapter for a MediaBrowser that handles connecting, disconnecting,
  * and basic browsing.
  */
-public class MediaBrowserAdapter {
+public class MediaBrowserManager {
 
-    private static final String TAG = "MediaBrowserAdapter";
+    private static final String TAG = "MediaBrowserManager";
 
 
     private final Context mContext;
 
-    private final MediaBrowserSubscriptionCallback mMediaBrowserSubscriptionCallback =
-            new MediaBrowserSubscriptionCallback();
 
-
-    //
-    private MediaBrowserCompat mMediaBrowser;
-
+    /**
+     *
+     */
+    // MediaBrowserCompat
+    private MediaBrowserCompat mMediaBrowserCompat;
+    // MediaControllerCompat
     @Nullable
     private MediaControllerCompat mMediaController;
-
-
-    // 存储播放状态与数据
-    private final InternalState mState;
-
-    // 连接回调
+    // service 连接回调
     private final MediaBrowserConnectionCallback mMediaBrowserConnectionCallback =
             new MediaBrowserConnectionCallback();
     // 音频变化回调
     private final MediaControllerCallback mMediaControllerCallback =
             new MediaControllerCallback();
+    //
+    private final MediaBrowserSubscriptionCallback mMediaBrowserSubscriptionCallback =
+            new MediaBrowserSubscriptionCallback();
+
 
     /**
      * 构造方法
      *
      * @param context
      */
-    public MediaBrowserAdapter(Context context) {
+    public MediaBrowserManager(Context context) {
         mContext = context;
-        // 存储播放状态与数据
-        mState = new InternalState();
     }
 
     /**
@@ -81,9 +78,9 @@ public class MediaBrowserAdapter {
      */
     public void onStart() {
         //
-        if (mMediaBrowser == null) {
+        if (mMediaBrowserCompat == null) {
             // 创建MediaBrowserCompat
-            mMediaBrowser = new MediaBrowserCompat(
+            mMediaBrowserCompat = new MediaBrowserCompat(
                     mContext,
                     // 创建ComponentName
                     new ComponentName(mContext, MusicService.class),
@@ -92,7 +89,7 @@ public class MediaBrowserAdapter {
                     //
                     null);
             // 链接service
-            mMediaBrowser.connect();
+            mMediaBrowserCompat.connect();
         }
         Log.d(TAG, "onStart: Creating MediaBrowser, and connecting");
     }
@@ -105,41 +102,17 @@ public class MediaBrowserAdapter {
             mMediaController.unregisterCallback(mMediaControllerCallback);
             mMediaController = null;
         }
-        if (mMediaBrowser != null && mMediaBrowser.isConnected()) {
-            mMediaBrowser.disconnect();
-            mMediaBrowser = null;
+        if (mMediaBrowserCompat != null && mMediaBrowserCompat.isConnected()) {
+            mMediaBrowserCompat.disconnect();
+            mMediaBrowserCompat = null;
         }
         // 数据置空
         Log.d(TAG, "onStop: Releasing MediaController, Disconnecting from MediaBrowser");
     }
 
-    /**
-     * The internal state of the app needs to revert to what it looks like when it started before
-     * any connections to the {@link MusicService} happens via the {@link MediaSessionCompat}.
-     */
-    private void resetState() {
-        // service被杀死后，数据置空
-        mState.reset();
-
-        Log.d(TAG, "resetState: ");
-    }
-
 
     /**
-     * seekTo
-     *
-     * @param pos
-     */
-    public void seekTo(long pos) {
-        // 音频seek
-        if (mMediaController != null) {
-            mMediaController.getTransportControls().seekTo(pos);
-        }
-    }
-
-
-    /**
-     * 获取播放控制器
+     * 获取播放控制器 通过该方法控制播放
      *
      * @return
      */
@@ -151,6 +124,8 @@ public class MediaBrowserAdapter {
         return mMediaController.getTransportControls();
     }
 
+
+    // ############################################onConnected CallBack################################################
 
     /**
      * mediaService的链接回调
@@ -168,17 +143,15 @@ public class MediaBrowserAdapter {
                 // Get a MediaController for the MediaSession.
                 mMediaController = new MediaControllerCompat(
                         mContext,
-                        mMediaBrowser.getSessionToken());
+                        mMediaBrowserCompat.getSessionToken());
                 mMediaController.registerCallback(mMediaControllerCallback);
 
                 /**
                  * 设置当前数据
                  */
                 // Sync existing MediaSession state to the UI.
-                mMediaControllerCallback.onMetadataChanged(
-                        mMediaController.getMetadata());
-                mMediaControllerCallback
-                        .onPlaybackStateChanged(mMediaController.getPlaybackState());
+                mMediaControllerCallback.onMetadataChanged(mMediaController.getMetadata());
+                mMediaControllerCallback.onPlaybackStateChanged(mMediaController.getPlaybackState());
 
 
             } catch (RemoteException e) {
@@ -186,9 +159,12 @@ public class MediaBrowserAdapter {
                 throw new RuntimeException(e);
             }
 
-            mMediaBrowser.subscribe(mMediaBrowser.getRoot(), mMediaBrowserSubscriptionCallback);
+            mMediaBrowserCompat.subscribe(mMediaBrowserCompat.getRoot(), mMediaBrowserSubscriptionCallback);
         }
     }
+
+    // ############################################onChildrenLoaded CallBack################################################
+
 
     /**
      * 加载新数据后调用
@@ -206,8 +182,9 @@ public class MediaBrowserAdapter {
         @Override
         public void onChildrenLoaded(@NonNull String parentId,
                                      @NonNull List<MediaBrowserCompat.MediaItem> children) {
-            assert mMediaController != null;
-
+            if (mMediaController == null) {
+                return;
+            }
             // Queue up all media items for this simple sample.
             for (final MediaBrowserCompat.MediaItem mediaItem : children) {
                 mMediaController.addQueueItem(mediaItem.getDescription());
@@ -219,6 +196,9 @@ public class MediaBrowserAdapter {
     }
 
 
+    // ############################################MediaControllerCallback CallBack################################################
+
+
     /**
      * service 通过MediaControllerCallback 回调到client
      */
@@ -226,132 +206,67 @@ public class MediaBrowserAdapter {
 
         @Override
         public void onMetadataChanged(final MediaMetadataCompat metadata) {
-
-
+            //
             for (OnMediaStatusChangeListener callback : mMediaStatusChangeListenerList) {
                 callback.onMetadataChanged(metadata);
             }
-
-
-            // Filtering out needless updates, given that the metadata has not changed.
-            if (isMediaIdSame(metadata, mState.getMediaMetadata())) {
-                Log.d(TAG, "onMetadataChanged: Filtering out needless onMetadataChanged() update");
-                return;
-            } else {
-                // 设置音频数据
-                mState.setMediaMetadata(metadata);
-            }
-
         }
 
         @Override
         public void onPlaybackStateChanged(@Nullable final PlaybackStateCompat state) {
-
-
+            //
             for (OnMediaStatusChangeListener callback : mMediaStatusChangeListenerList) {
                 callback.onPlaybackStateChanged(state);
             }
-
-            // 设置播放状态数据
-            mState.setPlaybackState(state);
         }
 
         @Override
         public void onQueueChanged(List<MediaSessionCompat.QueueItem> queue) {
             super.onQueueChanged(queue);
-
-
+            //
             for (OnMediaStatusChangeListener callback : mMediaStatusChangeListenerList) {
                 callback.onQueueChanged(queue);
             }
         }
 
         // service被杀死时调用
-        // This might happen if the MusicService is killed while the Activity is in the
-        // foreground and onStart() has been called (but not onStop()).
         @Override
         public void onSessionDestroyed() {
-
-            resetState();
+            // onSessionDestroyed: MusicService is dead!!!
             onPlaybackStateChanged(null);
-            Log.d(TAG, "onSessionDestroyed: MusicService is dead!!!");
-        }
-
-        /**
-         * 通过id判断是否为同一个音频
-         *
-         * @param currentMedia
-         * @param newMedia
-         * @return
-         */
-        private boolean isMediaIdSame(MediaMetadataCompat currentMedia,
-                                      MediaMetadataCompat newMedia) {
-            if (currentMedia == null || newMedia == null) {
-                return false;
-            }
-            String newMediaId =
-                    newMedia.getString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID);
-            String currentMediaId =
-                    currentMedia.getString(MediaMetadataCompat.METADATA_KEY_MEDIA_ID);
-            return newMediaId.equals(currentMediaId);
         }
 
     }
 
+    // ########################################音频变化回调 管理列表###################################################
 
     /**
-     * 播放状态与数据
+     * 音频变化回调 管理列表
      */
-    // A holder class that contains the internal state.
-    public class InternalState {
-
-        // 播放状态
-        private PlaybackStateCompat playbackState;
-        // 播放数据
-        private MediaMetadataCompat mediaMetadata;
-
-
-        /**
-         * service被杀死后，数据置空
-         */
-        public void reset() {
-            playbackState = null;
-            mediaMetadata = null;
-        }
-
-        public PlaybackStateCompat getPlaybackState() {
-            return playbackState;
-        }
-
-        public void setPlaybackState(PlaybackStateCompat playbackState) {
-            this.playbackState = playbackState;
-        }
-
-        public MediaMetadataCompat getMediaMetadata() {
-            return mediaMetadata;
-        }
-
-        public void setMediaMetadata(MediaMetadataCompat mediaMetadata) {
-            this.mediaMetadata = mediaMetadata;
-        }
-    }
-
-
-    // ###########################################################################################
-
-    // 音频变化的回调
     private List<OnMediaStatusChangeListener> mMediaStatusChangeListenerList = new ArrayList<>();
 
-    //
+    /**
+     * 添加音频变化回调
+     *
+     * @param l
+     */
     public void addOnMediaStatusListener(OnMediaStatusChangeListener l) {
         mMediaStatusChangeListenerList.add(l);
     }
 
+    /**
+     * 移除音频变化回调
+     *
+     * @param l
+     */
     public void removeOnMediaStatusListener(OnMediaStatusChangeListener l) {
         mMediaStatusChangeListenerList.remove(l);
     }
 
 
+    /**
+     * 音频变化回调
+     */
     public interface OnMediaStatusChangeListener {
 
         /**
