@@ -101,9 +101,16 @@ public class MusicLibrary {
         return albumRes.containsKey(mediaId) ? albumRes.get(mediaId) : 0;
     }
 
+    /**
+     * 根据id 获取图片
+     *
+     * @param context
+     * @param mediaId
+     * @return
+     */
     public static Bitmap getAlbumBitmap(Context context, String mediaId) {
-        return BitmapFactory.decodeResource(context.getResources(),
-                MusicLibrary.getAlbumRes(mediaId));
+        //
+        return BitmapFactory.decodeResource(context.getResources(), MusicLibrary.getAlbumRes(mediaId));
     }
 
     public static List<MediaBrowserCompat.MediaItem> getMediaItems() {

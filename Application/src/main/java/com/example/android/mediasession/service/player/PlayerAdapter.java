@@ -14,17 +14,15 @@
  * limitations under the License.
  */
 
-package com.example.android.mediasession.service;
+package com.example.android.mediasession.service.player;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.media.AudioManager;
-import android.net.wifi.WifiManager;
 import android.support.annotation.NonNull;
 import android.support.v4.media.MediaMetadataCompat;
-import android.support.v4.media.session.PlaybackStateCompat;
 
 /**
  * Abstract player implementation that handles playing music with proper handling of headphones
@@ -32,18 +30,198 @@ import android.support.v4.media.session.PlaybackStateCompat;
  */
 public abstract class PlayerAdapter {
 
+
+    // 默认的音量 0~1之间
     private static final float MEDIA_VOLUME_DEFAULT = 1.0f;
+    // 失去焦点时，降低音量后的音量
     private static final float MEDIA_VOLUME_DUCK = 0.2f;
 
 
+    /**
+     *
+     */
     // 播放的上下文对象
-    private final Context mApplicationContext;
+    private final Context mContext;
     // 获取AudioManager
     private final AudioManager mAudioManager;
     // OnAudioFocusChangeListener
     private final AudioFocusHelper mAudioFocusHelper;
-    // 当前是否有焦点
-    private boolean mPlayOnAudioFocus = false;
+
+
+    /**
+     * 构造方法
+     *
+     * @param context
+     */
+    public PlayerAdapter(@NonNull Context context) {
+        // 上下文对象
+        mContext = context.getApplicationContext();
+        // 获取AudioManager
+        mAudioManager = (AudioManager) mContext.getSystemService(Context.AUDIO_SERVICE);
+        // OnAudioFocusChangeListener
+        mAudioFocusHelper = new AudioFocusHelper();
+    }
+
+    public abstract void playFromMedia(MediaMetadataCompat metadata);
+
+    public abstract MediaMetadataCompat getCurrentMedia();
+
+    public abstract boolean isPlaying();
+
+
+    /**
+     * 播放音频
+     */
+    public final void play() {
+        // 是否获取到焦点的判断
+        if (mAudioFocusHelper.requestAudioFocus()) {
+            // 注册插拔耳机广播
+            registerAudioNoisyReceiver();
+            // 播放
+            onPlay();
+        }
+    }
+
+    /**
+     * Called when media is ready to be played and indicates the app has audio focus.
+     */
+    protected abstract void onPlay();
+
+
+    /**
+     * 停止播放
+     */
+    public final void pause() {
+        // 丢弃音频焦点
+        if (!mPlayingOnAudioFocusLoss) {
+            mAudioFocusHelper.abandonAudioFocus();
+        }
+        // 取消广播注册
+        unregisterAudioNoisyReceiver();
+        // 暂停播放
+        onPause();
+    }
+
+    /**
+     * Called when media must be paused.
+     */
+    protected abstract void onPause();
+
+
+    /**
+     * 停止播放
+     */
+    public final void stop() {
+        // 放弃焦点
+        mAudioFocusHelper.abandonAudioFocus();
+        // 取消耳机插拔广播注册
+        unregisterAudioNoisyReceiver();
+        // 结束播放
+        onStop();
+    }
+
+    /**
+     * Called when the media must be stopped. The player should clean up resources at this
+     * point.
+     */
+    protected abstract void onStop();
+
+    /**
+     * seek to
+     *
+     * @param position
+     */
+    public abstract void seekTo(long position);
+
+    /**
+     * 设置音频播放音量
+     *
+     * @param volume
+     */
+    public abstract void setVolume(float volume);
+
+
+    // ##########################################获取焦点帮助类###############################################
+
+
+    // 是否失去焦点时，停止了音频播放
+    private boolean mPlayingOnAudioFocusLoss = false;
+
+
+    /**
+     * Helper class for managing audio focus related tasks.
+     * <p>
+     * 音频焦点
+     */
+    private final class AudioFocusHelper
+            implements AudioManager.OnAudioFocusChangeListener {
+
+        /**
+         * 请求音频焦点
+         *
+         * @return
+         */
+        public boolean requestAudioFocus() {
+            // 请求音频焦点  并判断音频焦点的获取情况
+            final int result = mAudioManager.requestAudioFocus(this,
+                    AudioManager.STREAM_MUSIC,
+                    AudioManager.AUDIOFOCUS_GAIN);
+            return result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED;
+        }
+
+        /**
+         * 放弃音频焦点
+         */
+        public void abandonAudioFocus() {
+            mAudioManager.abandonAudioFocus(this);
+        }
+
+
+        /**
+         * 音频焦点变化回调
+         *
+         * @param focusChange
+         */
+        @Override
+        public void onAudioFocusChange(int focusChange) {
+            switch (focusChange) {
+                // 获取到音频焦点
+                case AudioManager.AUDIOFOCUS_GAIN:
+                    // 没有播放&&焦点失去时停止过播放 则播放
+                    if (mPlayingOnAudioFocusLoss && !isPlaying()) {
+                        play();
+                    }
+                    // 正在播放
+                    else if (isPlaying()) {
+                        setVolume(MEDIA_VOLUME_DEFAULT);
+                    }
+                    mPlayingOnAudioFocusLoss = false;
+                    break;
+                // 播放中失去焦点，可降低播放质量，来维持播放
+                case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK:
+                    setVolume(MEDIA_VOLUME_DUCK);
+                    break;
+                // 失去焦点
+                case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
+                    // 失去焦点，暂停播放
+                    if (isPlaying()) {
+                        mPlayingOnAudioFocusLoss = true;
+                        pause();
+                    }
+                    break;
+                // 失去焦点
+                case AudioManager.AUDIOFOCUS_LOSS:
+                    // 停止播放
+                    mAudioManager.abandonAudioFocus(this);
+                    mPlayingOnAudioFocusLoss = false;
+                    stop();
+                    break;
+            }
+        }
+    }
+
+
+    // ##########################################耳机状态变化的广播接收者###############################################
 
 
     /**
@@ -69,100 +247,13 @@ public abstract class PlayerAdapter {
                 }
             };
 
-    /**
-     * 构造方法
-     *
-     * @param context
-     */
-    public PlayerAdapter(@NonNull Context context) {
-        // 上下文对象
-        mApplicationContext = context.getApplicationContext();
-        // 获取AudioManager
-        mAudioManager = (AudioManager) mApplicationContext.getSystemService(Context.AUDIO_SERVICE);
-        // OnAudioFocusChangeListener
-        mAudioFocusHelper = new AudioFocusHelper();
-    }
-
-    public abstract void playFromMedia(MediaMetadataCompat metadata);
-
-    public abstract MediaMetadataCompat getCurrentMedia();
-
-    public abstract boolean isPlaying();
-
-
-    /**
-     * 播放音频
-     */
-    public final void play() {
-        // 是否获取到焦点的判断
-        if (mAudioFocusHelper.requestAudioFocus()) {
-            // 注册广播
-            registerAudioNoisyReceiver();
-            // 播放
-            onPlay();
-        }
-    }
-
-    /**
-     * Called when media is ready to be played and indicates the app has audio focus.
-     */
-    protected abstract void onPlay();
-
-
-    /**
-     * 停止播放
-     */
-    public final void pause() {
-        // 丢弃音频焦点
-        if (!mPlayOnAudioFocus) {
-            mAudioFocusHelper.abandonAudioFocus();
-        }
-        // 取消广播注册
-        unregisterAudioNoisyReceiver();
-        // 暂停播放
-        onPause();
-    }
-
-    /**
-     * Called when media must be paused.
-     */
-    protected abstract void onPause();
-
-
-    /**
-     * 停止播放
-     */
-    public final void stop() {
-        // 放弃焦点
-        mAudioFocusHelper.abandonAudioFocus();
-        // 取消广播注册
-        unregisterAudioNoisyReceiver();
-        // 结束播放
-        onStop();
-    }
-
-    /**
-     * Called when the media must be stopped. The player should clean up resources at this
-     * point.
-     */
-    protected abstract void onStop();
-
-    public abstract void seekTo(long position);
-
-    /**
-     * ？？？？？？？？？？？？？？
-     *
-     * @param volume
-     */
-    public abstract void setVolume(float volume);
-
 
     /**
      * 注册Receiver
      */
     private void registerAudioNoisyReceiver() {
         if (!mAudioNoisyReceiverRegistered) {
-            mApplicationContext.registerReceiver(mAudioNoisyReceiver, AUDIO_NOISY_INTENT_FILTER);
+            mContext.registerReceiver(mAudioNoisyReceiver, AUDIO_NOISY_INTENT_FILTER);
             mAudioNoisyReceiverRegistered = true;
         }
     }
@@ -173,75 +264,8 @@ public abstract class PlayerAdapter {
      */
     private void unregisterAudioNoisyReceiver() {
         if (mAudioNoisyReceiverRegistered) {
-            mApplicationContext.unregisterReceiver(mAudioNoisyReceiver);
+            mContext.unregisterReceiver(mAudioNoisyReceiver);
             mAudioNoisyReceiverRegistered = false;
-        }
-    }
-
-    /**
-     * Helper class for managing audio focus related tasks.
-     */
-    private final class AudioFocusHelper
-            implements AudioManager.OnAudioFocusChangeListener {
-
-        /**
-         * 请求音频焦点
-         *
-         * @return
-         */
-        private boolean requestAudioFocus() {
-            // 请求音频焦点  并判断音频焦点的获取情况
-            final int result = mAudioManager.requestAudioFocus(this,
-                    AudioManager.STREAM_MUSIC,
-                    AudioManager.AUDIOFOCUS_GAIN);
-            return result == AudioManager.AUDIOFOCUS_REQUEST_GRANTED;
-        }
-
-        /**
-         * 放弃音频焦点
-         */
-        private void abandonAudioFocus() {
-            mAudioManager.abandonAudioFocus(this);
-        }
-
-
-        /**
-         * 音频焦点变化回调
-         *
-         * @param focusChange
-         */
-        @Override
-        public void onAudioFocusChange(int focusChange) {
-            switch (focusChange) {
-                // 获取到音频焦点
-                case AudioManager.AUDIOFOCUS_GAIN:
-                    // 有焦点 没有播放，则播放
-                    if (mPlayOnAudioFocus && !isPlaying()) {
-                        play();
-                    } else if (isPlaying()) {
-                        setVolume(MEDIA_VOLUME_DEFAULT);
-                    }
-                    mPlayOnAudioFocus = false;
-                    break;
-                // 播放中失去焦点，可降低播放质量，来维持播放
-                case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT_CAN_DUCK:
-                    setVolume(MEDIA_VOLUME_DUCK);
-                    break;
-                // 失去焦点
-                case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
-                    if (isPlaying()) {
-                        mPlayOnAudioFocus = true;
-                        pause();
-                    }
-                    break;
-                // 失去焦点
-                case AudioManager.AUDIOFOCUS_LOSS:
-                    //
-                    mAudioManager.abandonAudioFocus(this);
-                    mPlayOnAudioFocus = false;
-                    stop();
-                    break;
-            }
         }
     }
 }

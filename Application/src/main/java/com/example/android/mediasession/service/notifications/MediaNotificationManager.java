@@ -65,46 +65,46 @@ public class MediaNotificationManager {
     /**
      *
      */
-    // MediaBrowserService
-    private final MusicService mMediaBrowserService;
+    private final Context mContext;
 
     /**
-     * @param mediaBrowserService
+     * @param context
      */
-    public MediaNotificationManager(MusicService mediaBrowserService) {
+    public MediaNotificationManager(Context context) {
         // MediaBrowserService
-        mMediaBrowserService = mediaBrowserService;
+        mContext = context;
         // NotificationManager
         mNotificationManager = (NotificationManager)
-                mMediaBrowserService.getSystemService(Context.NOTIFICATION_SERVICE);
+                mContext.getSystemService(Context.NOTIFICATION_SERVICE);
 
+        /**
+         *
+         */
         mPlayAction =
                 new NotificationCompat.Action(
                         R.drawable.ic_play_arrow_white_24dp,
-                        mMediaBrowserService.getString(R.string.label_play),
-                        MediaButtonReceiver.buildMediaButtonPendingIntent(
-                                mMediaBrowserService,
-                                PlaybackStateCompat.ACTION_PLAY));
+                        mContext.getString(R.string.label_play),
+                        MediaButtonReceiver.buildMediaButtonPendingIntent(mContext, PlaybackStateCompat.ACTION_PLAY));
         mPauseAction =
                 new NotificationCompat.Action(
                         R.drawable.ic_pause_white_24dp,
-                        mMediaBrowserService.getString(R.string.label_pause),
+                        mContext.getString(R.string.label_pause),
                         MediaButtonReceiver.buildMediaButtonPendingIntent(
-                                mMediaBrowserService,
+                                mContext,
                                 PlaybackStateCompat.ACTION_PAUSE));
         mNextAction =
                 new NotificationCompat.Action(
                         R.drawable.ic_skip_next_white_24dp,
-                        mMediaBrowserService.getString(R.string.label_next),
+                        mContext.getString(R.string.label_next),
                         MediaButtonReceiver.buildMediaButtonPendingIntent(
-                                mMediaBrowserService,
+                                mContext,
                                 PlaybackStateCompat.ACTION_SKIP_TO_NEXT));
         mPrevAction =
                 new NotificationCompat.Action(
                         R.drawable.ic_skip_previous_white_24dp,
-                        mMediaBrowserService.getString(R.string.label_previous),
+                        mContext.getString(R.string.label_previous),
                         MediaButtonReceiver.buildMediaButtonPendingIntent(
-                                mMediaBrowserService,
+                                mContext,
                                 PlaybackStateCompat.ACTION_SKIP_TO_PREVIOUS));
 
         // Cancel all notifications to handle the case where the Service was killed and
@@ -123,7 +123,9 @@ public class MediaNotificationManager {
     public Notification getNotification(MediaMetadataCompat metadata,
                                         @NonNull PlaybackStateCompat state,
                                         MediaSessionCompat.Token token) {
+        //
         boolean isPlaying = state.getState() == PlaybackStateCompat.STATE_PLAYING;
+        //
         MediaDescriptionCompat description = metadata.getDescription();
         NotificationCompat.Builder builder =
                 buildNotification(state, token, isPlaying, description);
@@ -140,7 +142,7 @@ public class MediaNotificationManager {
             createChannel();
         }
 
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(mMediaBrowserService, CHANNEL_ID);
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(mContext, CHANNEL_ID);
         builder.setStyle(
                 new MediaStyle()
                         .setMediaSession(token)
@@ -149,9 +151,9 @@ public class MediaNotificationManager {
                         .setShowCancelButton(true)
                         .setCancelButtonIntent(
                                 MediaButtonReceiver.buildMediaButtonPendingIntent(
-                                        mMediaBrowserService,
+                                        mContext,
                                         PlaybackStateCompat.ACTION_STOP)))
-                .setColor(ContextCompat.getColor(mMediaBrowserService, R.color.notification_bg))
+                .setColor(ContextCompat.getColor(mContext, R.color.notification_bg))
                 .setSmallIcon(R.drawable.ic_stat_image_audiotrack)
                 // Pending intent that is fired when user clicks on notification.
                 .setContentIntent(createContentIntent())
@@ -159,11 +161,11 @@ public class MediaNotificationManager {
                 .setContentTitle(description.getTitle())
                 // Subtitle - Usually Artist name.
                 .setContentText(description.getSubtitle())
-                .setLargeIcon(MusicLibrary.getAlbumBitmap(mMediaBrowserService, description.getMediaId()))
+                .setLargeIcon(MusicLibrary.getAlbumBitmap(mContext, description.getMediaId()))
                 // When notification is deleted (when playback is paused and notification can be
                 // deleted) fire MediaButtonPendingIntent with ACTION_STOP.
                 .setDeleteIntent(MediaButtonReceiver.buildMediaButtonPendingIntent(
-                        mMediaBrowserService, PlaybackStateCompat.ACTION_STOP))
+                        mContext, PlaybackStateCompat.ACTION_STOP))
                 // Show controls on lock screen even when user hides sensitive content.
                 .setVisibility(NotificationCompat.VISIBILITY_PUBLIC);
 
@@ -213,10 +215,10 @@ public class MediaNotificationManager {
     }
 
     private PendingIntent createContentIntent() {
-        Intent openUI = new Intent(mMediaBrowserService, MainActivity.class);
+        Intent openUI = new Intent(mContext, MainActivity.class);
         openUI.setFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP);
         return PendingIntent.getActivity(
-                mMediaBrowserService, REQUEST_CODE, openUI, PendingIntent.FLAG_CANCEL_CURRENT);
+                mContext, REQUEST_CODE, openUI, PendingIntent.FLAG_CANCEL_CURRENT);
     }
 
 }

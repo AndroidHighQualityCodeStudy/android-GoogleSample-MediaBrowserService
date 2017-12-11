@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.example.android.mediasession.service.players;
+package com.example.android.mediasession.service.player;
 
 import android.content.Context;
 import android.content.res.AssetFileDescriptor;
@@ -22,10 +22,8 @@ import android.media.MediaPlayer;
 import android.os.SystemClock;
 import android.support.v4.media.MediaMetadataCompat;
 import android.support.v4.media.session.PlaybackStateCompat;
-import android.util.Log;
 
 import com.example.android.mediasession.service.PlaybackInfoListener;
-import com.example.android.mediasession.service.PlayerAdapter;
 import com.example.android.mediasession.service.contentcatalogs.MusicLibrary;
 import com.example.android.mediasession.ui.MainActivity;
 
@@ -33,29 +31,35 @@ import com.example.android.mediasession.ui.MainActivity;
  * Exposes the functionality of the {@link MediaPlayer} and implements the {@link PlayerAdapter}
  * so that {@link MainActivity} can control music playback.
  */
-public final class MediaPlayerAdapter extends PlayerAdapter {
+public final class MediaPlayerManager extends PlayerAdapter {
 
 
-    // Work-around for a MediaPlayer bug related to the behavior of MediaPlayer.seekTo()
-    // while not playing.
-    private int mSeekWhileNotPlaying = -1;
-
-
+    /**
+     *
+     */
     // 上下文对象
     private final Context mContext;
+    // 音频播放器MediaPlayer
+    private MediaPlayer mMediaPlayer;
     // 播放信息回调
     private PlaybackInfoListener mPlaybackInfoListener;
 
-    // 音频播放器MediaPlayer
-    private MediaPlayer mMediaPlayer;
+    /**
+     *
+     */
     // 当前音频信息
     private MediaMetadataCompat mCurrentMedia;
     // 当前音频id
     private String mFilename;
     // 当前的播放状态
+    @PlaybackStateCompat.State
     private int mState;
     // 是否播放完成
     private boolean mCurrentMediaPlayedToCompletion;
+
+    // Work-around for a MediaPlayer bug related to the behavior of MediaPlayer.seekTo()
+    // while not playing.
+    private int mSeekWhileNotPlaying = -1;
 
 
     /**
@@ -64,7 +68,7 @@ public final class MediaPlayerAdapter extends PlayerAdapter {
      * @param context
      * @param listener
      */
-    public MediaPlayerAdapter(Context context, PlaybackInfoListener listener) {
+    public MediaPlayerManager(Context context, PlaybackInfoListener listener) {
         super(context);
         // 上下文对象
         mContext = context.getApplicationContext();
@@ -72,12 +76,108 @@ public final class MediaPlayerAdapter extends PlayerAdapter {
         mPlaybackInfoListener = listener;
     }
 
+
+    // Implements PlaybackControl.
+    @Override
+    public void playFromMedia(MediaMetadataCompat metadata) {
+        // 当前音频信息
+        mCurrentMedia = metadata;
+        // 音频id
+        final String mediaId = metadata.getDescription().getMediaId();
+        playFile(MusicLibrary.getMusicFilename(mediaId));
+    }
+
+    @Override
+    public MediaMetadataCompat getCurrentMedia() {
+        return mCurrentMedia;
+    }
+
+
+    /**
+     * 音频是否在播放
+     *
+     * @return
+     */
+    @Override
+    public boolean isPlaying() {
+        return mMediaPlayer != null && mMediaPlayer.isPlaying();
+    }
+
+
+    /**
+     * 播放音频
+     */
+    @Override
+    protected void onPlay() {
+        if (mMediaPlayer != null && !mMediaPlayer.isPlaying()) {
+            mMediaPlayer.start();
+            setNewState(PlaybackStateCompat.STATE_PLAYING);
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        if (mMediaPlayer != null && mMediaPlayer.isPlaying()) {
+            mMediaPlayer.pause();
+            setNewState(PlaybackStateCompat.STATE_PAUSED);
+        }
+    }
+
+
+    @Override
+    public void onStop() {
+        // Regardless of whether or not the MediaPlayer has been created / started, the state must
+        // be updated, so that MediaNotificationManager can take down the notification.
+        setNewState(PlaybackStateCompat.STATE_STOPPED);
+        release();
+    }
+
+
+    /**
+     * seek
+     *
+     * @param position
+     */
+    @Override
+    public void seekTo(long position) {
+        if (mMediaPlayer != null) {
+            // 音频未播放
+            if (!mMediaPlayer.isPlaying()) {
+                mSeekWhileNotPlaying = (int) position;
+            }
+            // seek to
+            mMediaPlayer.seekTo((int) position);
+
+            // Set the state (to the current state) because the position changed and should
+            // be reported to clients.
+            setNewState(mState);
+        }
+    }
+
+
+    /**
+     * 设置音频播放音量
+     *
+     * @param volume
+     */
+    @Override
+    public void setVolume(float volume) {
+        if (mMediaPlayer != null) {
+            mMediaPlayer.setVolume(volume, volume);
+        }
+    }
+
+    // ##########################################################################################
+
+
     /**
      * Once the {@link MediaPlayer} is released, it can't be used again, and another one has to be
      * created. In the onStop() method of the {@link MainActivity} the {@link MediaPlayer} is
      * released. Then in the onStart() of the {@link MainActivity} a new {@link MediaPlayer}
      * object has to be created. That's why this method is private, and called by load(int) and
      * not the constructor.
+     * <p>
+     * 初始化mediaPlayer
      */
     private void initializeMediaPlayer() {
         // 创建MediaPlayer
@@ -99,21 +199,6 @@ public final class MediaPlayerAdapter extends PlayerAdapter {
                 }
             });
         }
-    }
-
-    // Implements PlaybackControl.
-    @Override
-    public void playFromMedia(MediaMetadataCompat metadata) {
-        // 当前音频信息
-        mCurrentMedia = metadata;
-        // 音频id
-        final String mediaId = metadata.getDescription().getMediaId();
-        playFile(MusicLibrary.getMusicFilename(mediaId));
-    }
-
-    @Override
-    public MediaMetadataCompat getCurrentMedia() {
-        return mCurrentMedia;
     }
 
 
@@ -168,53 +253,6 @@ public final class MediaPlayerAdapter extends PlayerAdapter {
         play();
     }
 
-    @Override
-    public void onStop() {
-        // Regardless of whether or not the MediaPlayer has been created / started, the state must
-        // be updated, so that MediaNotificationManager can take down the notification.
-        setNewState(PlaybackStateCompat.STATE_STOPPED);
-        release();
-    }
-
-    /**
-     * 释放 MediaPlayer
-     */
-    private void release() {
-        if (mMediaPlayer != null) {
-            mMediaPlayer.release();
-            mMediaPlayer = null;
-        }
-    }
-
-    /**
-     * 音频是否在播放
-     *
-     * @return
-     */
-    @Override
-    public boolean isPlaying() {
-        return mMediaPlayer != null && mMediaPlayer.isPlaying();
-    }
-
-
-    /**
-     * 播放音频
-     */
-    @Override
-    protected void onPlay() {
-        if (mMediaPlayer != null && !mMediaPlayer.isPlaying()) {
-            mMediaPlayer.start();
-            setNewState(PlaybackStateCompat.STATE_PLAYING);
-        }
-    }
-
-    @Override
-    protected void onPause() {
-        if (mMediaPlayer != null && mMediaPlayer.isPlaying()) {
-            mMediaPlayer.pause();
-            setNewState(PlaybackStateCompat.STATE_PAUSED);
-        }
-    }
 
     /**
      * 播放状态
@@ -239,14 +277,14 @@ public final class MediaPlayerAdapter extends PlayerAdapter {
         final long reportPosition;
         if (mSeekWhileNotPlaying >= 0) {
             reportPosition = mSeekWhileNotPlaying;
-
+            //
             if (mState == PlaybackStateCompat.STATE_PLAYING) {
                 mSeekWhileNotPlaying = -1;
             }
         } else {
             reportPosition = mMediaPlayer == null ? 0 : mMediaPlayer.getCurrentPosition();
         }
-
+        // 回调播放状态
         final PlaybackStateCompat.Builder stateBuilder = new PlaybackStateCompat.Builder();
         stateBuilder.setActions(getAvailableActions());
         stateBuilder.setState(mState,
@@ -292,24 +330,15 @@ public final class MediaPlayerAdapter extends PlayerAdapter {
         return actions;
     }
 
-    @Override
-    public void seekTo(long position) {
-        if (mMediaPlayer != null) {
-            if (!mMediaPlayer.isPlaying()) {
-                mSeekWhileNotPlaying = (int) position;
-            }
-            mMediaPlayer.seekTo((int) position);
 
-            // Set the state (to the current state) because the position changed and should
-            // be reported to clients.
-            setNewState(mState);
+    /**
+     * 释放 MediaPlayer
+     */
+    private void release() {
+        if (mMediaPlayer != null) {
+            mMediaPlayer.release();
+            mMediaPlayer = null;
         }
     }
 
-    @Override
-    public void setVolume(float volume) {
-        if (mMediaPlayer != null) {
-            mMediaPlayer.setVolume(volume, volume);
-        }
-    }
 }

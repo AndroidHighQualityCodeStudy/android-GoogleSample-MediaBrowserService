@@ -19,10 +19,10 @@ package com.example.android.mediasession.service;
 import android.support.v4.media.session.PlaybackStateCompat;
 import android.support.v4.media.session.MediaSessionCompat;
 
-import com.example.android.mediasession.service.players.MediaPlayerAdapter;
+import com.example.android.mediasession.service.player.MediaPlayerManager;
 
 /**
- * Listener to provide state updates from {@link MediaPlayerAdapter} (the media player)
+ * Listener to provide state updates from {@link MediaPlayerManager} (the media player)
  * to {@link MusicService} (the service that holds our {@link MediaSessionCompat}.
  */
 public abstract class PlaybackInfoListener {

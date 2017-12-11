@@ -34,7 +34,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Adapter for a MediaBrowser that handles connecting, disconnecting,
+ * MediaBrowserManager for a MediaBrowser that handles connecting, disconnecting,
  * and basic browsing.
  */
 public class MediaBrowserManager {
@@ -82,7 +82,7 @@ public class MediaBrowserManager {
             // 创建MediaBrowserCompat
             mMediaBrowserCompat = new MediaBrowserCompat(
                     mContext,
-                    // 创建ComponentName
+                    // 创建ComponentName 连接 MusicService
                     new ComponentName(mContext, MusicService.class),
                     // 创建callback
                     mMediaBrowserConnectionCallback,

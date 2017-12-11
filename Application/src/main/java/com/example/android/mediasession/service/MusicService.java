@@ -31,7 +31,7 @@ import android.util.Log;
 
 import com.example.android.mediasession.service.contentcatalogs.MusicLibrary;
 import com.example.android.mediasession.service.notifications.MediaNotificationManager;
-import com.example.android.mediasession.service.players.MediaPlayerAdapter;
+import com.example.android.mediasession.service.player.MediaPlayerManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -46,7 +46,7 @@ public class MusicService extends MediaBrowserServiceCompat {
 
 
     //
-    private PlayerAdapter mMediaPlayerAdapter;
+    private MediaPlayerManager mMediaPlayerManager;
     private MediaNotificationManager mMediaNotificationManager;
 
     private boolean mServiceInStartedState;
@@ -56,26 +56,25 @@ public class MusicService extends MediaBrowserServiceCompat {
      *
      */
     // 与MediaControl交互的MediaSessionCompat
-    private MediaSessionCompat mMediaSession;
+    private MediaSessionCompat mMediaSessionCompat;
 
     @Override
     public void onCreate() {
         super.onCreate();
 
-
         /**
          * MediaSessionCompat
          */
         // 创建MediaSessionCompat
-        mMediaSession = new MediaSessionCompat(this, "MusicService");
+        mMediaSessionCompat = new MediaSessionCompat(this, "MusicService");
         // setCallBack
-        mMediaSession.setCallback(new MediaSessionCallback());
-        mMediaSession.setFlags(
+        mMediaSessionCompat.setCallback(new MediaSessionCallback());
+        mMediaSessionCompat.setFlags(
                 MediaSessionCompat.FLAG_HANDLES_MEDIA_BUTTONS |
                         MediaSessionCompat.FLAG_HANDLES_QUEUE_COMMANDS |
                         MediaSessionCompat.FLAG_HANDLES_TRANSPORT_CONTROLS);
         // setSessionToken
-        setSessionToken(mMediaSession.getSessionToken());
+        setSessionToken(mMediaSessionCompat.getSessionToken());
 
         /**
          * MediaNotificationManager
@@ -83,9 +82,9 @@ public class MusicService extends MediaBrowserServiceCompat {
         mMediaNotificationManager = new MediaNotificationManager(this);
 
         /**
-         * MediaPlayerAdapter
+         * MediaPlayerManager
          */
-        mMediaPlayerAdapter = new MediaPlayerAdapter(this, new MediaPlayerListener());
+        mMediaPlayerManager = new MediaPlayerManager(this, new MediaPlayerListener());
     }
 
     @Override
@@ -97,9 +96,9 @@ public class MusicService extends MediaBrowserServiceCompat {
     @Override
     public void onDestroy() {
         mMediaNotificationManager.onDestroy();
-        mMediaPlayerAdapter.stop();
-        mMediaSession.release();
-        Log.d(TAG, "onDestroy: MediaPlayerAdapter stopped, and MediaSession released");
+        mMediaPlayerManager.stop();
+        mMediaSessionCompat.release();
+        Log.d(TAG, "onDestroy: MediaPlayerManager stopped, and MediaSession released");
     }
 
     @Override
@@ -159,10 +158,10 @@ public class MusicService extends MediaBrowserServiceCompat {
             mPreparedMedia = MusicLibrary.getMetadata(MusicService.this, mediaId);
             // 设置音频数据
             // 该方法将回调到 Client 的 MediaControllerCallback.onMetadataChanged
-            mMediaSession.setMetadata(mPreparedMedia);
+            mMediaSessionCompat.setMetadata(mPreparedMedia);
             // 激活mediaSession
-            if (!mMediaSession.isActive()) {
-                mMediaSession.setActive(true);
+            if (!mMediaSessionCompat.isActive()) {
+                mMediaSessionCompat.setActive(true);
             }
         }
 
@@ -178,19 +177,19 @@ public class MusicService extends MediaBrowserServiceCompat {
                 onPrepare();
             }
             // 播放
-            mMediaPlayerAdapter.playFromMedia(mPreparedMedia);
+            mMediaPlayerManager.playFromMedia(mPreparedMedia);
             Log.d(TAG, "onPlayFromMediaId: MediaSession active");
         }
 
         @Override
         public void onPause() {
-            mMediaPlayerAdapter.pause();
+            mMediaPlayerManager.pause();
         }
 
         @Override
         public void onStop() {
-            mMediaPlayerAdapter.stop();
-            mMediaSession.setActive(false);
+            mMediaPlayerManager.stop();
+            mMediaSessionCompat.setActive(false);
         }
 
         @Override
@@ -209,7 +208,7 @@ public class MusicService extends MediaBrowserServiceCompat {
 
         @Override
         public void onSeekTo(long pos) {
-            mMediaPlayerAdapter.seekTo(pos);
+            mMediaPlayerManager.seekTo(pos);
         }
 
         /**
@@ -240,7 +239,7 @@ public class MusicService extends MediaBrowserServiceCompat {
         @Override
         public void onPlaybackStateChange(PlaybackStateCompat state) {
             // 最终回调到Client 的 MediaControllerCallback.onPlaybackStateChanged
-            mMediaSession.setPlaybackState(state);
+            mMediaSessionCompat.setPlaybackState(state);
 
             // Manage the started state of this service.
             switch (state.getState()) {
@@ -256,32 +255,46 @@ public class MusicService extends MediaBrowserServiceCompat {
             }
         }
 
-        class ServiceManager {
+        @Override
+        public void onPlaybackCompleted() {
 
+        }
+
+        class ServiceManager {
+            /**
+             * @param state
+             */
             private void moveServiceToStartedState(PlaybackStateCompat state) {
+                //
                 Notification notification =
                         mMediaNotificationManager.getNotification(
-                                mMediaPlayerAdapter.getCurrentMedia(), state, getSessionToken());
-
+                                mMediaPlayerManager.getCurrentMedia(), state, getSessionToken());
+                //
                 if (!mServiceInStartedState) {
                     ContextCompat.startForegroundService(
                             MusicService.this,
                             new Intent(MusicService.this, MusicService.class));
                     mServiceInStartedState = true;
                 }
-
+                //
                 startForeground(MediaNotificationManager.NOTIFICATION_ID, notification);
             }
 
+            /**
+             * @param state
+             */
             private void updateNotificationForPause(PlaybackStateCompat state) {
                 stopForeground(false);
                 Notification notification =
                         mMediaNotificationManager.getNotification(
-                                mMediaPlayerAdapter.getCurrentMedia(), state, getSessionToken());
+                                mMediaPlayerManager.getCurrentMedia(), state, getSessionToken());
                 mMediaNotificationManager.getNotificationManager()
                         .notify(MediaNotificationManager.NOTIFICATION_ID, notification);
             }
 
+            /**
+             * @param state
+             */
             private void moveServiceOutOfStartedState(PlaybackStateCompat state) {
                 stopForeground(true);
                 stopSelf();
